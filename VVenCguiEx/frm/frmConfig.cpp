@@ -393,13 +393,11 @@ System::Void frmConfig::fcgTSBCMDOnly_CheckedChanged(System::Object^  sender, Sy
     //なぜか知らんが、Visibleプロパティをfalseにするだけでは非表示にできない
     //しょうがないので参照の削除と挿入を行う
     if (fcgTSBCMDOnly->Checked) {
-        fcgtabControlVideo->TabPages->RemoveAt(1);
         fcgtabControlVideo->TabPages->RemoveAt(0);
         fcgtabPageExSettings->Text = L"映像";
         fcggroupBoxCmdEx->Text = L"コマンドライン";
     } else {
-        fcgtabControlVideo->TabPages->Insert(0, fcgtabPageSVTAV1_1);
-        fcgtabControlVideo->TabPages->Insert(1, fcgtabPageSVTAV1_2);
+        fcgtabControlVideo->TabPages->Insert(0, fcgtabPageVVENC_1);
         fcgtabPageExSettings->Text = L"拡張";
         fcggroupBoxCmdEx->Text = L"追加コマンド";
     }
@@ -898,16 +896,14 @@ System::Void frmConfig::InitComboBox() {
     setComboBox(fcgCXTransfer,       list_transfer);
     setComboBox(fcgCXRC,             list_rc);
     setComboBox(fcgCXEncMode,        list_enc_mode);
-    setComboBox(fcgCXSCM,            list_scm);
-    setComboBox(fcgCXTune,           list_tune);
-
-    setComboBox(fcgCXAQ,             list_aq);
     setComboBox(fcgCXColorFormat,    list_color_format);
-    setComboBox(fcgCXEnableMfmv, list_on_off_default);
+    setComboBox(fcgCXLookahead,      list_lookahead);
 
-    setComboBox(fcgCXHierarchicalLevels, list_hierarchical_levels);
+    setComboBox(fcgCXRefreshType, list_refresh_type);
 
-    setComboBox(fcgCXProfileAV1,     list_profile_av1);
+    setComboBox(fcgCXProfile,    list_profile_vvc);
+    setComboBox(fcgCXLevel,      list_level_vvc);
+    setComboBox(fcgCXTier,       list_tier_vvc);
 
     setComboBox(fcgCXAudioEncTiming, audio_enc_timing_desc);
     setComboBox(fcgCXAudioDelayCut,  AUDIO_DELAY_CUT_MODE);
@@ -1090,22 +1086,7 @@ System::Void frmConfig::LoadLangText() {
     //空白時にグレーで入れる文字列を言語変更のため一度空白に戻す
     ExeTXPathEnter();
     //言語更新開始
-    LOAD_CLI_TEXT(fcgtabPageSVTAV1_1);
-    LOAD_CLI_TEXT(fcgLBFastDecode);
-    LOAD_CLI_TEXT(fcgLBTune);
-    LOAD_CLI_TEXT(fcgLBBiasPct);
-    LOAD_CLI_TEXT(fcgLBOverShootPct);
-    LOAD_CLI_TEXT(fcgLBUnderShootPct);
-    LOAD_CLI_TEXT(fcgLBMaxSectionPct);
-    LOAD_CLI_TEXT(fcgLBMinSectionPct);
-    LOAD_CLI_TEXT(fcgLBScm);
-    LOAD_CLI_TEXT(fcgLBEnableCDEF);
-    LOAD_CLI_TEXT(fcgLBFilmGrain);
-    LOAD_CLI_TEXT(fcgLBRestrictedMV);
-    LOAD_CLI_TEXT(fcgLBEnableTF);
-    LOAD_CLI_TEXT(fcgLBEnableOverlay);
-    LOAD_CLI_TEXT(fcgLBEnableDLF);
-    LOAD_CLI_TEXT(fcgLBSceneChangeDetection);
+    LOAD_CLI_TEXT(fcgtabPageVVENC_1);
     LOAD_CLI_TEXT(fcggroupBoxColorMatrix);
     LOAD_CLI_TEXT(fcgLBInputRange);
     LOAD_CLI_TEXT(fcgLBTransfer);
@@ -1117,24 +1098,23 @@ System::Void frmConfig::LoadLangText() {
     LOAD_CLI_TEXT(fcgLBRC);
     LOAD_CLI_TEXT(fcgLBEncMode);
     LOAD_CLI_TEXT(fcgLB2pasAuto);
-    LOAD_CLI_TEXT(fcgLBProfileAV1);
+    LOAD_CLI_TEXT(fcgLBRefreshType);
+    LOAD_CLI_TEXT(fcgLBRefreshSec);
+    LOAD_CLI_TEXT(fcgLBIntraPeriod);
+    LOAD_CLI_TEXT(fcgLBTile2);
+    LOAD_CLI_TEXT(fcgLBProfile);
+    LOAD_CLI_TEXT(fcgLBLevel);
+    LOAD_CLI_TEXT(fcgLBTier);
     LOAD_CLI_TEXT(fcgLBColorFormat);
-    LOAD_CLI_TEXT(fcgLBEnableRestortionFiltering);
     LOAD_CLI_TEXT(fcgLBMaxQP);
     LOAD_CLI_TEXT(fcgLBMinQP);
-    LOAD_CLI_TEXT(fcgLBMfmv);
-    LOAD_CLI_TEXT(fcgLBAQ);
-    LOAD_CLI_TEXT(fcgLBHierarchicalLevels);
-    LOAD_CLI_TEXT(fcgLBTile2);
+    LOAD_CLI_TEXT(fcgLBQPA);
     LOAD_CLI_TEXT(fcgLBTile);
-    LOAD_CLI_TEXT(fcgLBIntraRefreshType);
     LOAD_CLI_TEXT(fcgLBKeyint);
     LOAD_CLI_TEXT(fcgLBThreads);
     LOAD_CLI_TEXT(fcgCBUsehighbit);
     LOAD_CLI_TEXT(fcgBTX264Path);
     LOAD_CLI_TEXT(fcgLBX264Path);
-    LOAD_CLI_TEXT(fcgtabPageSVTAV1_2);
-    LOAD_CLI_TEXT(fcgLBEnableStatReport);
     LOAD_CLI_TEXT(fcgLBSTATUS);
     LOAD_CLI_TEXT(fcgBTStatusFile);
     LOAD_CLI_TEXT(fcgtabPageExSettings);
@@ -1262,45 +1242,31 @@ System::Void frmConfig::ConfToFrm(CONF_GUIEX *cnf, bool all) {
     parse_cmd(&enc, cnf->enc.cmd, true);
     this->SuspendLayout();
     fcgCBUsehighbit->Checked = enc.bit_depth > 8;
-    SetCXIndex(fcgCXRC, get_cx_index(list_rc, enc.rc));
+    SetCXIndex(fcgCXRC, get_cx_index(list_rc, enc.rate_control));
     SetCXIndex(fcgCXEncMode, get_cx_index(list_enc_mode, enc.preset));
     SetNUValue(fcgNUQP, enc.qp);
     SetNUValue(fcgNUBitrate, enc.bitrate);
     fcgCB2PassAuto->Checked = enc.pass > 0;
 
-    SetCXIndex(fcgCXAQ, get_cx_index(list_aq, enc.aq));        //aq
-    SetNUValue(fcgNUBiasPct, enc.bias_pct);
+    fcgCBQPA->Checked = enc.qpa != 0;
     SetCXIndex(fcgCXColorFormat, get_cx_index(list_color_format, enc.output_csp));
-    SetCXIndex(fcgCXColorPrim, get_cx_index(list_colorprim, enc.color_primaries));
-    SetCXIndex(fcgCXColorRange, get_cx_index(list_color_range, enc.color_range));
-    fcgCBEnableCDEF->Checked = enc.enable_cdef != 0;
-    fcgCBEnableDLF->Checked = enc.enable_dlf != 0;
-    SetCXIndex(fcgCXEnableMfmv, get_cx_index(list_on_off_default, enc.enable_mfmv));
-    fcgCBEnableOverlay->Checked = enc.enable_overlays != 0;
-    fcgCBEnableRestorationFilter->Checked = enc.enable_restoration != 0;
-    fcgCBEnableStatReport->Checked = enc.enable_stat_report != 0;
-    fcgCBEnableTF->Checked = enc.enable_tf != 0;
-    fcgCBFastDecode->Checked = enc.fast_decode != 0;
-    SetNUValue(fcgNUFilmGrain, enc.film_grain);
-    SetCXIndex(fcgCXHierarchicalLevels, get_cx_index(list_hierarchical_levels, enc.hierarchical_levels)); //hierarchical-levels
-    SetNUValue(fcgNUIntraRefreshType, enc.intra_refresh_type);
-    SetNUValue(fcgNUKeyint, enc.keyint);        //intra-period
-    SetNUValue(fcgNUThreads, enc.lp);         //lp (LogicalProcessorNumber)
-    SetCXIndex(fcgCXColorMatrix, get_cx_index(list_colormatrix, enc.matrix_coefficients));
-    SetNUValue(fcgNUMaxQP, enc.max_qp);
-    SetNUValue(fcgNUMaxSectionPct, enc.maxsection_pct);
-    SetNUValue(fcgNUMinQP, enc.min_qp);
-    SetNUValue(fcgNUMinSectionPct, enc.minsection_pct);
-    SetNUValue(fcgNUOverShootPct, enc.overshoot_pct);
-    SetCXIndex(fcgCXProfileAV1, get_cx_index(list_profile_av1, enc.profile));
-    fcgCBRestrictedMV->Checked = enc.rmv != 0;
-    fcgCBSceneChangeDetection->Checked = enc.scd != 0;  //scd
-    SetCXIndex(fcgCXSCM, get_cx_index(list_scm, enc.scm));        //scm
-    SetNUValue(fcgNUTileRows, enc.tile_rows);   //tile-rows
-    SetNUValue(fcgNUTileColumns, enc.tile_columns); //tile-columns
-    SetCXIndex(fcgCXTune, get_cx_index(list_tune, enc.tune));
-    SetCXIndex(fcgCXTransfer, get_cx_index(list_transfer, enc.transfer_characteristics));
-    SetNUValue(fcgNUUnderShootPct, enc.undershoot_pct);
+    SetCXIndex(fcgCXColorMatrix, get_cx_index(list_colormatrix, enc.colormatrix));
+    SetCXIndex(fcgCXColorPrim, get_cx_index(list_colorprim, enc.colorprim));
+    SetCXIndex(fcgCXTransfer, get_cx_index(list_transfer, enc.transfer));
+    SetCXIndex(fcgCXColorRange, enc.fullrange ? 1 : 0);
+    SetCXIndex(fcgCXLookahead, get_cx_index(list_lookahead, enc.lookahead));
+    SetNUValue(fcgNUKeyint, enc.gopsize);
+    SetCXIndex(fcgCXRefreshType, get_cx_index(list_refresh_type, enc.refreshtype));
+    SetNUValue(fcgNURefreshSec, enc.refreshsec);        //intra-period
+    SetNUValue(fcgNUIntraPeriod, enc.intraperiod);        //intra-period
+    SetNUValue(fcgNUThreads, enc.threads);
+    //SetNUValue(fcgNUMaxQP, enc.max_qp);
+    //SetNUValue(fcgNUMinQP, enc.min_qp);
+    SetCXIndex(fcgCXProfile, get_cx_index(list_profile_vvc, enc.profile));
+    SetCXIndex(fcgCXLevel, get_cx_index(list_level_vvc, enc.level));
+    SetCXIndex(fcgCXTier, get_cx_index(list_tier_vvc, enc.tier));
+    //SetNUValue(fcgNUTileRows, enc.tile_rows);   //tile-rows
+    //SetNUValue(fcgNUTileColumns, enc.tile_columns); //tile-columns
 
     if (cnf->vid.sar_x * cnf->vid.sar_y < 0)
         cnf->vid.sar_x = cnf->vid.sar_y = 0;
@@ -1369,52 +1335,29 @@ String ^frmConfig::FrmToConf(CONF_GUIEX *cnf) {
     CONF_ENCODER enc = get_default_prm();
     //x264部
     enc.bit_depth            = fcgCBUsehighbit->Checked ? 10 : 8;
-    enc.rc                   = list_rc[fcgCXRC->SelectedIndex].value;
-    enc.enable_tpl_la        = (enc.rc == get_cx_value(list_rc, L"CQP")) ? 0 : 1;
+    enc.rate_control         = list_rc[fcgCXRC->SelectedIndex].value;
     enc.preset               = list_enc_mode[fcgCXEncMode->SelectedIndex].value;
     enc.bitrate              = (int)fcgNUBitrate->Value;
     enc.qp                   = (int)fcgNUQP->Value;
     enc.pass                 = (int)fcgCB2PassAuto->Checked ? 2 : 0;
+    enc.qpa                  = fcgCBQPA->Checked;
+    //enc.output_csp = list_color_format[fcgCXColorFormat->SelectedIndex].value;
+    enc.colormatrix          = list_colormatrix[fcgCXColorPrim->SelectedIndex].value;
+    enc.colorprim            = list_colorprim[fcgCXColorPrim->SelectedIndex].value;
+    enc.transfer             = list_transfer[fcgCXColorPrim->SelectedIndex].value;
+    enc.fullrange            = fcgCXColorRange->SelectedIndex != 0;
+    enc.lookahead            = list_lookahead[fcgCXLookahead->SelectedIndex].value;
 
-    enc.aq = list_aq[fcgCXAQ->SelectedIndex].value;
-    enc.bias_pct = (int)fcgNUBiasPct->Value;
-    enc.output_csp = list_color_format[fcgCXColorFormat->SelectedIndex].value;
-    enc.color_primaries = list_colorprim[fcgCXColorPrim->SelectedIndex].value;
-    enc.color_range = list_color_range[fcgCXColorRange->SelectedIndex].value;
-
-    enc.enable_cdef = fcgCBEnableCDEF->Checked;
-    enc.enable_dlf = fcgCBEnableDLF->Checked;
-
-    enc.enable_mfmv = list_on_off_default[fcgCXEnableMfmv->SelectedIndex].value;
-    enc.enable_overlays = fcgCBEnableOverlay->Checked;
-    enc.enable_restoration = fcgCBEnableRestorationFilter->Checked;
-
-    enc.enable_stat_report = fcgCBEnableStatReport->Checked;
-    enc.enable_tf = fcgCBEnableTF->Checked;
-
-    enc.fast_decode = fcgCBFastDecode->Checked;
-    enc.film_grain = (int)fcgNUFilmGrain->Value;
-    enc.hierarchical_levels = (int)list_hierarchical_levels[fcgCXHierarchicalLevels->SelectedIndex].value;
-    enc.intra_refresh_type = (int)fcgNUIntraRefreshType->Value;
-    enc.keyint = (int)fcgNUKeyint->Value;
-    enc.lp = (int)fcgNUThreads->Value;
-    enc.matrix_coefficients = list_colormatrix[fcgCXColorMatrix->SelectedIndex].value;
-    enc.max_qp = (int)fcgNUMaxQP->Value;
-    enc.maxsection_pct = (int)fcgNUMaxSectionPct->Value;
-    enc.min_qp = (int)fcgNUMinQP->Value;
-    enc.minsection_pct = (int)fcgNUMinSectionPct->Value;
-
-    enc.overshoot_pct = (int)fcgNUOverShootPct->Value;
-    enc.profile = list_profile_av1[fcgCXProfileAV1->SelectedIndex].value;
-    enc.rmv = fcgCBRestrictedMV->Checked;
-    enc.scd = fcgCBSceneChangeDetection->Checked;
-    enc.scm = list_scm[fcgCXSCM->SelectedIndex].value;
-
-    enc.tile_rows = (int)fcgNUTileRows->Value;
-    enc.tile_columns = (int)fcgNUTileColumns->Value;
-    enc.transfer_characteristics = list_transfer[fcgCXTransfer->SelectedIndex].value;
-    enc.tune = list_tune[fcgCXTune->SelectedIndex].value;
-    enc.undershoot_pct = (int)fcgNUUnderShootPct->Value;
+    enc.gopsize              = (int)fcgNUKeyint->Value;
+    enc.refreshtype = list_refresh_type[fcgCXRefreshType->SelectedIndex].value;
+    enc.refreshsec  = (int)fcgNURefreshSec->Value;
+    enc.intraperiod = (int)fcgNUIntraPeriod->Value;
+    enc.threads     = (int)fcgNUThreads->Value;
+    //enc.max_qp = (int)fcgNUMaxQP->Value;
+    //enc.min_qp = (int)fcgNUMinQP->Value;
+    enc.profile = list_profile_vvc[fcgCXProfile->SelectedIndex].value;
+    enc.level   = list_level_vvc[fcgCXLevel->SelectedIndex].value;
+    enc.tier    = list_tier_vvc[fcgCXTier->SelectedIndex].value;
 
     cnf->vid.sar_x = (int)fcgNUAspectRatioX->Value * ((fcgCXAspectRatio->SelectedIndex != 1) ? 1 : -1);
     cnf->vid.sar_y = (int)fcgNUAspectRatioY->Value * ((fcgCXAspectRatio->SelectedIndex != 1) ? 1 : -1);

@@ -643,7 +643,6 @@ static const WCHAR *use_default_exe_path = L"exe_files内の実行ファイル�
 
 const int x264_encmode_to_RCint[] = {
     X264_RC_QP,
-    X264_RC_QP,
     X264_RC_BITRATE,
     NULL
 };
@@ -651,9 +650,10 @@ const int x264_encmode_to_RCint[] = {
 const int x264_encmode_to_passint[] = {
     0,
     0,
-    0,
     NULL
 };
+static_assert(_countof(list_rc) == _countof(x264_encmode_to_RCint));
+static_assert(_countof(list_rc) == _countof(x264_encmode_to_passint));
 
 static const ENC_OPTION_STR aspect_desc[] = {
     { NULL, AUO_CONFIG_CX_ASPECT_SAR, L"SAR比を指定 (デフォルト)" },

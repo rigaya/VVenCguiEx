@@ -451,6 +451,12 @@ static void build_full_cmd(char *cmd, size_t nSize, const CONF_GUIEX *conf, cons
     }
     //cmdexを適用
     set_cmd(&enc, conf->vid.cmdex, true);
+    if (enc.threads == 0) {
+        enc.threads = get_cpu_info().logical_cores;
+    }
+    if (enc.gopsize == 0) {
+        enc.gopsize = (int)(oip->rate / (double)oip->scale + 0.5) * 10;
+    }
 
     CONF_GUIEX prm;
     //パラメータをコピー
@@ -468,7 +474,7 @@ static void build_full_cmd(char *cmd, size_t nSize, const CONF_GUIEX *conf, cons
     }
     sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " %s", prm.vid.cmdex);
     if (enc.pass > 0) {
-        sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " --rcstatsfile \"%s\"", prm.vid.stats);
+        sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " --RCStatsFile \"%s\"", prm.vid.stats);
     }
 
 #if 0
@@ -482,7 +488,7 @@ static void build_full_cmd(char *cmd, size_t nSize, const CONF_GUIEX *conf, cons
     //1pass目でafsでない、--framesがなければ--framesを指定
     //svt-av1はなぜかフレーム数を指定しないとエラーで落ちてしまう
     //if ((!prm.vid.afs || pe->current_x264_pass > 1) && strstr(cmd, "-n ") == NULL)
-        sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " --frames %d", oip->n - pe->drop_count + pe->delay_cut_additional_vframe);
+        sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " -f %d", oip->n - pe->drop_count + pe->delay_cut_additional_vframe);
     //解像度情報追加(--input-res)
     if (strcmp(input, PIPE_FN) == NULL)
         sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " -s %dx%d", oip->w, oip->h);
@@ -502,12 +508,10 @@ static void build_full_cmd(char *cmd, size_t nSize, const CONF_GUIEX *conf, cons
         scale *= 5;
     }
     int gcd = get_gcd(rate, scale);
-    sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " --framerate %d --framescale %d", rate / gcd, scale / gcd);
+    sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " --fps %d/%d", rate / gcd, scale / gcd);
 #endif
     //出力ファイル
-    if (enc.pass != 1) {
-        sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " -o \"%s\"", pe->temp_filename);
-    }
+    sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " -b \"%s\"", pe->temp_filename);
     //入力
     sprintf_s(cmd + strlen(cmd), nSize - strlen(cmd), " -i -");
 }
@@ -762,9 +766,6 @@ static AUO_RESULT x264_out(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe
 
     set_pixel_data(&pixel_data, &enc, oip->w, oip->h);
     set_auto_colormatrix(&enc, oip->h);
-    if (enc.threads == 0) {
-        enc.threads = get_cpu_info().logical_cores;
-    }
 
     int *jitter = NULL;
     int rp_ret = 0;
@@ -858,6 +859,10 @@ static AUO_RESULT x264_out(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe
             if (!(i & 7)) {
                 //Aviutlの進捗表示を更新
                 oip->func_rest_time_disp(i + oip->n * (pe->current_pass - 1), oip->n * pe->total_pass);
+#if ENCODER_VVENC
+                DWORD log_len = 0;
+                set_window_title_enc_mes(ENCODER_NAME_W, pe->drop_count, i);
+#endif
 
                 //svt-av1優先度
                 check_enc_priority(pe->h_p_aviutl, pi_enc.hProcess, set_priority);
@@ -963,7 +968,7 @@ static AUO_RESULT x264_out(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe
         if (!(ret & AUO_RESULT_ERROR) && afs)
             write_log_auo_line_fmt(LOG_INFO, L"drop %d / %d frames", pe->drop_count, i);
 
-        write_log_auo_line_fmt(LOG_INFO, L"%s: Aviutl: %.2f%% / x264: %.2f%%", g_auo_mes.get(AUO_VIDEO_CPU_USAGE), GetProcessAvgCPUUsage(pe->h_p_aviutl, &time_aviutl), GetProcessAvgCPUUsage(pi_enc.hProcess));
+        write_log_auo_line_fmt(LOG_INFO, L"%s: Aviutl: %.2f%% / VVenC: %.2f%%", g_auo_mes.get(AUO_VIDEO_CPU_USAGE), GetProcessAvgCPUUsage(pe->h_p_aviutl, &time_aviutl), GetProcessAvgCPUUsage(pi_enc.hProcess));
         write_log_auo_line_fmt(LOG_INFO, L"Aviutl %s: %.3f ms", g_auo_mes.get(AUO_VIDEO_AVIUTL_PROC_AVG_TIME), time_get_frame * 1000.0 / i);
         write_log_auo_enc_time(g_auo_mes.get(AUO_VIDEO_ENCODE_TIME), tm_vid_enc_fin - tm_vid_enc_start);
     }
@@ -1132,11 +1137,10 @@ static AUO_RESULT video_output_inside(CONF_GUIEX *conf, const OUTPUT_INFO *oip, 
             switch (pe->current_pass) {
                 case 1: {
                     enc.pass = 1;
-                    enc.preset = std::max(enc.preset, 8);
                     break;
                 }
                 case 2:
-                    if (enc.rc != 0 //CQPの時は除く
+                    if (enc.rate_control != get_cx_value(list_rc, L"CQP") //CQPの時は除く
                         && conf->vid.afs && conf->vid.afs_bitrate_correction)
                         enc.bitrate = (enc.bitrate * oip->n) / (oip->n - pe->drop_count);
                     //下へフォールスルー
@@ -1148,7 +1152,7 @@ static AUO_RESULT video_output_inside(CONF_GUIEX *conf, const OUTPUT_INFO *oip, 
                     break;
             }
             CONF_GUIEX conf_tmp = *conf;
-            strcpy_s(conf_tmp.enc.cmd, gen_cmd(&enc, false).c_str());
+            strcpy_s(conf_tmp.enc.cmd, gen_cmd(&enc, true).c_str());
             set_window_title_x264(pe);
             ret |= x264_out(&conf_tmp, oip, pe, sys_dat);
         } else {

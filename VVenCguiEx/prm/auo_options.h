@@ -122,7 +122,7 @@ const CX_DESC_AUO list_color_range[] = {
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
 const CX_DESC_AUO list_colorprim[] = {
-    { L"undef",     AUO_OPTION_VUI_UNDEF, 2   },
+    { L"unknown",   AUO_OPTION_VUI_UNDEF, 2   },
     { L"auto",      AUO_OPTION_VUI_AUTO, COLOR_MATRIX_AUTO   },
     { L"bt709",     AUO_MES_UNKNOWN, 1   },
     //{ L"smpte170m", AUO_MES_UNKNOWN, 3 },
@@ -139,7 +139,7 @@ const CX_DESC_AUO list_colorprim[] = {
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
 const CX_DESC_AUO list_transfer[] = {
-    { L"undef",         AUO_OPTION_VUI_UNDEF, 2  },
+    { L"unknown",       AUO_OPTION_VUI_UNDEF, 2  },
     { L"auto",          AUO_OPTION_VUI_AUTO, COLOR_MATRIX_AUTO  },
     { L"bt709",         AUO_MES_UNKNOWN, 1  },
     //{ L"smpte170m",     AUO_MES_UNKNOWN, 3    },
@@ -161,7 +161,7 @@ const CX_DESC_AUO list_transfer[] = {
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
 const CX_DESC_AUO list_colormatrix[] = {
-    { L"undef",       AUO_OPTION_VUI_UNDEF, 2  },
+    { L"unknown",     AUO_OPTION_VUI_UNDEF, 2  },
     { L"auto",        AUO_OPTION_VUI_AUTO, COLOR_MATRIX_AUTO  },
     { L"bt709",       AUO_MES_UNKNOWN, 1  },
     { L"identity",    AUO_MES_UNKNOWN, 0  },
@@ -212,14 +212,6 @@ typedef struct {
 #pragma pack(pop)
 
 
-const ENC_OPTION_STR list_preset[] = {
-    { "faster", AUO_MES_UNKNOWN, L"faster" },
-    { "fast",   AUO_MES_UNKNOWN, L"fast"   },
-    { "medium", AUO_MES_UNKNOWN, L"medium" },
-    { "slow",   AUO_MES_UNKNOWN, L"slow"   },
-    { "slower", AUO_MES_UNKNOWN, L"slower" },
-    { nullptr,  AUO_MES_UNKNOWN, 0 }
-};
 
 
 //x264パラメータ構造体
@@ -228,8 +220,9 @@ const ENC_OPTION_STR list_preset[] = {
 #pragma pack(push,1)
 typedef struct {
     int     preset;            //enc-mode
+    int     rate_control;      //rate-control
     int     bit_depth;         //bit-depth
-    int     output_csp;        //color_format
+    int     output_csp;
     int     profile;
     int     level;
     int     tier;
@@ -237,6 +230,20 @@ typedef struct {
     int     qp;                  //qp
     int     qpa;                 //qpa
     int     bitrate;             //bitrate
+    int     gopsize;
+    int     lookahead;
+
+    int     colormatrix;
+    int     colorprim;
+    int     transfer;
+    int     fullrange;
+    int     sar_x;
+    int     sar_y;
+
+    int     refreshtype;
+    int     refreshsec;
+    int     intraperiod;
+
     int     threads;
 } CONF_ENCODER;
 #pragma pack(pop)
@@ -283,10 +290,19 @@ static const wchar_t *get_cx_desc(const CX_DESC_AUO *list, int v) {
     return nullptr;
 }
 
+
+const CX_DESC_AUO list_enc_mode[] = {
+    { L"faster", AUO_OPTION_ENC_MODE_FASTER, 0 },
+    { L"fast",   AUO_OPTION_ENC_MODE_FAST,   1 },
+    { L"medium", AUO_OPTION_ENC_MODE_MEDIUM, 2 },
+    { L"slow",   AUO_OPTION_ENC_MODE_SLOW,   3 },
+    { L"slower", AUO_OPTION_ENC_MODE_SLOWER, 4 },
+    { nullptr,  AUO_MES_UNKNOWN,  0 }
+};
+
 const CX_DESC_AUO list_rc[] = {
-    { L"CQP", AUO_MES_UNKNOWN,  0 },
-    { L"CRF", AUO_MES_UNKNOWN, -1 },
-    { L"VBR", AUO_MES_UNKNOWN,  1 },
+    { L"CQP", AUO_OPTION_RC_CQP,  0 },
+    { L"VBR", AUO_OPTION_RC_VBR,  1 },
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
 
@@ -297,157 +313,52 @@ const CX_DESC_AUO list_on_off_default[] = {
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
 const CX_DESC_AUO list_color_format[] = {
-    { L"0: yuv400", AUO_MES_UNKNOWN, 0 },
-    { L"1: yuv420", AUO_MES_UNKNOWN, 1 },
-    { L"2: yuv422", AUO_MES_UNKNOWN, 2 },
-    { L"3: yuv444", AUO_MES_UNKNOWN, 3 },
+    { L"420",    AUO_MES_UNKNOWN, OUT_CSP_YV12 },
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
-const CX_DESC_AUO list_hierarchical_levels[] = {
-    { L"0:  0B Pyramid", AUO_OPTION_HIERARCHICAL_LEVEL_0, 0 },
-    { L"1:  1B Pyramid", AUO_OPTION_HIERARCHICAL_LEVEL_1, 1 },
-    { L"2:  3B Pyramid", AUO_OPTION_HIERARCHICAL_LEVEL_2, 2 },
-    { L"3:  7B Pyramid", AUO_OPTION_HIERARCHICAL_LEVEL_3, 3 },
-    { L"4: 15B Pyramid", AUO_OPTION_HIERARCHICAL_LEVEL_4, 4 },
-    { L"5: 31B Pyramid", AUO_OPTION_HIERARCHICAL_LEVEL_5, 5 },
+const CX_DESC_AUO list_profile_vvc[] = {
+    { L"auto",            AUO_MES_UNKNOWN, 0 },
+    { L"main10",          AUO_MES_UNKNOWN, 1 },
+    { L"main10_stillpic", AUO_MES_UNKNOWN, 2 },
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
-const CX_DESC_AUO list_chroma_mode[] = {
-    { L"-1: default",                   AUO_OPTION_CHROMA_MODE_A, -1 },
-    { L"0: Full chroma search",         AUO_OPTION_CHROMA_MODE_0,  0 },
-    { L"1: Fast chroma search",         AUO_OPTION_CHROMA_MODE_1,  1 },
-    { L"2: Chroma blind @ MD + CFL",    AUO_OPTION_CHROMA_MODE_2,  2 },
-    { L"3: Chroma blind @ MD + no CFL", AUO_OPTION_CHROMA_MODE_3,  3 },
+const CX_DESC_AUO list_tier_vvc[] = {
+    { L"main", AUO_MES_UNKNOWN, 0 },
+    { L"high", AUO_MES_UNKNOWN, 1 },
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
-const CX_DESC_AUO list_compound[] = {
-    { L"-1: default",                 AUO_OPTION_COMPOUND_A, -1 },
-    { L"0: off",                      AUO_OPTION_COMPOUND_0,  0 },
-    { L"1: on (AVG/DIST/DIFF)",       AUO_OPTION_COMPOUND_1,  1 },
-    { L"2: on (AVG/DIST/DIFF/WEDGE)", AUO_OPTION_COMPOUND_2,  2 },
+const CX_DESC_AUO list_level_vvc[] = {
+    { L"auto", AUO_MES_UNKNOWN,  0 },
+    { L"1.0",  AUO_MES_UNKNOWN, 10 },
+    { L"2.0",  AUO_MES_UNKNOWN, 20 },
+    { L"2.1",  AUO_MES_UNKNOWN, 21 },
+    { L"3.0",  AUO_MES_UNKNOWN, 30 },
+    { L"3.1",  AUO_MES_UNKNOWN, 31 },
+    { L"4.0",  AUO_MES_UNKNOWN, 40 },
+    { L"4.1",  AUO_MES_UNKNOWN, 41 },
+    { L"5.0",  AUO_MES_UNKNOWN, 50 },
+    { L"5.1",  AUO_MES_UNKNOWN, 51 },
+    { L"5.2",  AUO_MES_UNKNOWN, 52 },
+    { L"6.0",  AUO_MES_UNKNOWN, 60 },
+    { L"6.1",  AUO_MES_UNKNOWN, 61 },
+    { L"6.2",  AUO_MES_UNKNOWN, 62 },
+    { L"6.3",  AUO_MES_UNKNOWN, 63 },
     { nullptr, AUO_MES_UNKNOWN, 0 }
 };
-const CX_DESC_AUO list_hbd_md[] = {
-    { L"0: off",     AUO_OPTION_HBD_MD_0, 0 },
-    { L"1: partial", AUO_OPTION_HBD_MD_1, 1 },
-    { L"2: full",    AUO_OPTION_HBD_MD_2, 2 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
+const CX_DESC_AUO list_refresh_type[] = {
+    { L"idr",     AUO_OPTION_REFRESH_TYPE_IDR,     0 },
+    { L"cra",     AUO_OPTION_REFRESH_TYPE_CRA,     1 },
+    { L"idr2",    AUO_OPTION_REFRESH_TYPE_IDR2,    2 },
+    { L"cra_cre", AUO_OPTION_REFRESH_TYPE_CRA_CRE, 3 },
+    { nullptr,    AUO_MES_UNKNOWN,  0 }
 };
-const CX_DESC_AUO list_intra_bcmode[] = {
-    { L"-1: default", AUO_OPTION_INTRA_BCMODE_A, -1 },
-    { L"0: off",      AUO_OPTION_INTRA_BCMODE_0,  0 },
-    { L"1: slow",     AUO_OPTION_INTRA_BCMODE_1,  1 },
-    { L"2: fast",     AUO_OPTION_INTRA_BCMODE_2,  2 },
-    { L"3: fastest",  AUO_OPTION_INTRA_BCMODE_3,  3 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_sg_filter_mode[] = {
-    { L"-1: default", AUO_OPTION_SG_FILTER_A, -1 },
-    { L"0: off",      AUO_OPTION_SG_FILTER_0,  0 },
-    { L"1: step 0",   AUO_OPTION_SG_FILTER_1,  1 },
-    { L"2: step 1",   AUO_OPTION_SG_FILTER_2,  2 },
-    { L"3: step 4",   AUO_OPTION_SG_FILTER_3,  3 },
-    { L"4: step 16",  AUO_OPTION_SG_FILTER_4,  4 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_wn_filter_mode[] = {
-    { L"-1: default", AUO_OPTION_WN_FILTER_MODE_A, -1 },
-    { L"0: off",      AUO_OPTION_WN_FILTER_MODE_0,  0 },
-    { L"1: 3-Tap",    AUO_OPTION_WN_FILTER_MODE_1,  1 },
-    { L"2: 5-Tap",    AUO_OPTION_WN_FILTER_MODE_2,  2 },
-    { L"3: 7-Tap",    AUO_OPTION_WN_FILTER_MODE_3,  3 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_bipred_3x3[] = {
-    { L"-1: default", AUO_OPTION_BIPRED_3x3_A, -1 },
-    { L"0: off",      AUO_OPTION_BIPRED_3x3_0,  0 },
-    { L"1: full",     AUO_OPTION_BIPRED_3x3_1,  1 },
-    { L"2: reduced",  AUO_OPTION_BIPRED_3x3_2,  2 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_pred_me[] = {
-    { L"-1: default", AUO_OPTION_PRED_ME_A, -1 },
-    { L"0: off",      AUO_OPTION_PRED_ME_0,  0 },
-    { L"1: faster",   AUO_OPTION_PRED_ME_1,  1 },
-    { L"2: ",         AUO_OPTION_PRED_ME_2,  2 },
-    { L"3: ",         AUO_OPTION_PRED_ME_3,  3 },
-    { L"4: ",         AUO_OPTION_PRED_ME_4,  4 },
-    { L"5: slower",   AUO_OPTION_PRED_ME_5,  5 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_profile_av1[] = {
-    { L"0: main",         AUO_MES_UNKNOWN, 0 },
-    { L"1: high",         AUO_MES_UNKNOWN, 1 },
-    { L"2: professional", AUO_MES_UNKNOWN, 2 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_obmc_level[] = {
-    { L"-1: default", AUO_OPTION_OBMC_LEVEL_A, -1 },
-    { L"0: off",      AUO_OPTION_OBMC_LEVEL_0,  0 },
-    { L"1: full",     AUO_OPTION_OBMC_LEVEL_1,  1 },
-    { L"2: fast",     AUO_OPTION_OBMC_LEVEL_2,  2 },
-    { L"3: faster",   AUO_OPTION_OBMC_LEVEL_3,  3 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_mrp_level[] = {
-    { L"-1: default", AUO_OPTION_MRP_LEVEL_A, -1 },
-    { L"0: off",      AUO_OPTION_MRP_LEVEL_0,  0 },
-    { L"1: full ",    AUO_OPTION_MRP_LEVEL_1,  1 },
-    { L"2: Level 1",  AUO_OPTION_MRP_LEVEL_2,  2 },
-    { L"3: Level 2",  AUO_OPTION_MRP_LEVEL_3,  3 },
-    { L"7: Level 3",  AUO_OPTION_MRP_LEVEL_4,  4 },
-    { L"5: Level 4",  AUO_OPTION_MRP_LEVEL_5,  5 },
-    { L"6: Level 5",  AUO_OPTION_MRP_LEVEL_6,  6 },
-    { L"7: Level 6",  AUO_OPTION_MRP_LEVEL_7,  7 },
-    { L"8: Level 7",  AUO_OPTION_MRP_LEVEL_8,  8 },
-    { L"9: Level 8",  AUO_OPTION_MRP_LEVEL_9,  9 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_scm[] = {
-    { L"0: off",                     AUO_OPTION_SCM_0, 0 },
-    { L"1: on",                      AUO_OPTION_SCM_1, 1 },
-    { L"2: Content Based Detection", AUO_OPTION_SCM_2, 2 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_enc_mode[] = {
-    { L"0 - best quality", AUO_OPTION_ENC_MODE_00,  0 },
-    { L"1",                AUO_OPTION_ENC_MODE_01,  1 },
-    { L"2",                AUO_OPTION_ENC_MODE_02,  2 },
-    { L"3",                AUO_OPTION_ENC_MODE_03,  3 },
-    { L"4",                AUO_OPTION_ENC_MODE_04,  4 },
-    { L"5",                AUO_OPTION_ENC_MODE_05,  5 },
-    { L"6",                AUO_OPTION_ENC_MODE_06,  6 },
-    { L"7",                AUO_OPTION_ENC_MODE_07,  7 },
-    { L"8",                AUO_OPTION_ENC_MODE_08,  8 },
-    { L"9",                AUO_OPTION_ENC_MODE_09,  9 },
-    { L"10",               AUO_OPTION_ENC_MODE_10, 10 },
-    { L"11",               AUO_OPTION_ENC_MODE_11, 11 },
-    { L"12 - fast",        AUO_OPTION_ENC_MODE_12, 12 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_aq[] = {
-    { L"0: off",                    AUO_OPTION_AQ_0, 0 },
-    { L"1: variance base",          AUO_OPTION_AQ_1, 1 },
-    { L"2: deltaq pred efficiency", AUO_OPTION_AQ_2, 2 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
-const CX_DESC_AUO list_tune[] = {
-    { L"0: VQ",    AUO_MES_UNKNOWN, 0 },
-    { L"1: ssim",  AUO_MES_UNKNOWN, 1 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
+const CX_DESC_AUO list_lookahead[] = {
+    { L"-1",   AUO_MES_UNKNOWN, -1 },
+    { L"0",    AUO_MES_UNKNOWN,  0 },
+    { L"1",    AUO_MES_UNKNOWN,  1 },
+    { nullptr, AUO_MES_UNKNOWN,  0 }
 };
 
-const CX_DESC_AUO list_palette[] = {
-    { L"-1: default", AUO_OPTION_PALETTE_A, -1 },
-    { L"0: off",      AUO_OPTION_PALETTE_0,  0 },
-    { L"1 ",          AUO_OPTION_PALETTE_1,  1 },
-    { L"2 ",          AUO_OPTION_PALETTE_2,  2 },
-    { L"3 ",          AUO_OPTION_PALETTE_3,  3 },
-    { L"4 ",          AUO_OPTION_PALETTE_3,  4 },
-    { L"5 ",          AUO_OPTION_PALETTE_5,  5 },
-    { L"6 ",          AUO_OPTION_PALETTE_6,  6 },
-    { nullptr, AUO_MES_UNKNOWN, 0 }
-};
 typedef struct {
     char *long_name;
     char *short_name;

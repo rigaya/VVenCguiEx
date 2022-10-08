@@ -97,27 +97,65 @@ int parse_one_option(CONF_ENCODER *cx, const char *option_name, const std::vecto
         }
         return 0;
     };
+    auto list_to_int = [](int *value, const CX_DESC_AUO *list, const std::string& argv) {
+        auto val = get_value_from_chr(list, char_to_wstring(argv).c_str());
+        if (val == -1) {
+            return 1;
+        }
+        *value = val;
+        return 0;
+    };
 #define OPT_NUM(str, val) \
     if (IS_OPTION(str)) { \
         i++; \
         return to_int(&cx->val, argv[i]); \
     }
+#define OPT_LST(str, list, val) \
+    if (IS_OPTION(str)) { \
+        i++; \
+        return list_to_int(&cx->val, list, argv[i]); \
+    }
+    OPT_LST("RateControl", list_rc, rate_control);
+    if (IS_OPTION("TargetBitrate")) {
+        i++;
+        int value = 0;
+        if (sscanf_s(argv[i].c_str(), "%dk", &value) != 1) {
+            return 1;
+        }
+        cx->bitrate = value;
+        if (cx->bitrate == 0) {
+            cx->rate_control = get_cx_value(list_rc, L"CQP");
+        }
+        return 0;
+    }
+    OPT_NUM("QP", qp);
+    OPT_NUM("InputBitDepth", bit_depth);
+    OPT_LST("InputChromaFormat", list_color_format, output_csp);
+    OPT_LST("preset", list_enc_mode, preset);
+    OPT_LST("Profile", list_profile_vvc, profile);
+    OPT_LST("Level", list_level_vvc, level);
+    OPT_LST("Tier", list_tier_vvc, tier);
+    OPT_NUM("OutputBitDepth", bit_depth);
+    OPT_NUM("Pass", pass);
+    OPT_NUM("PerceptQPA", qpa);
 
-    OPT_NUM("preset", preset);
-    OPT_NUM("profile", profile);
-    OPT_NUM("level", level);
-    OPT_NUM("tier", tier);
-    OPT_NUM("internal-bitdepth", bit_depth);
-    OPT_NUM("bitrate", bitrate);
-    OPT_NUM("qp", qp);
-    OPT_NUM("qpa", qpa);
-    OPT_NUM("c", output_csp);
-    OPT_NUM("profile", profile);
-    OPT_NUM("pass", pass);
-    OPT_NUM("bitrate", bitrate);
-    OPT_NUM("threads", threads);
+    OPT_NUM("GOPSize", gopsize);
+    OPT_LST("DecodingRefreshType", list_refresh_type, refreshtype);
+    OPT_NUM("RefreshSec", refreshsec);
+    OPT_NUM("IntraPeriod", intraperiod);
+
+    OPT_LST("MatrixCoefficients", list_colormatrix, colormatrix);
+    OPT_LST("ColourPrimaries", list_colorprim, colorprim);
+    OPT_LST("TransferCharacteristics", list_transfer, transfer);
+    OPT_NUM("VideoFullRange", fullrange);
+    OPT_NUM("SarWidth", sar_x);
+    OPT_NUM("SarHeight", sar_y);
+
+    OPT_LST("LookAhead", list_lookahead, lookahead);
+    OPT_NUM("Threads", threads);
     return 1;
 #undef OPT_NUM
+#undef OPT_LST
 #undef IS_OPTION
 }
 
@@ -161,30 +199,51 @@ std::string gen_cmd(const CONF_ENCODER *cx, bool save_disabled_prm) {
     std::stringstream cmd;
     CONF_ENCODER encPrmDefault = get_default_prm();
 #define OPT_NUM(str, opt) if ((cx->opt) != (encPrmDefault.opt)) cmd << " --" << (str) << " " << (int)(cx->opt);
-
-    OPT_NUM("preset", preset);
-    OPT_NUM("internal-bitdepth", bit_depth);
-    OPT_NUM("c", output_csp);
-    OPT_NUM("profile", profile);
-    OPT_NUM("level", level);
-    OPT_NUM("tier", tier);
-    OPT_NUM("pass", pass);
-    if (cx->bitrate == 0) {
-        OPT_NUM("bitrate", bitrate);
-    } else {
-        OPT_NUM("qp", qp);
+#define OPT_LST(str, list, opt) if ((cx->opt) != (encPrmDefault.opt)) { \
+    auto ptr = get_cx_desc(list, cx->opt); \
+    if (ptr) cmd << " --" << (str) << " " << wstring_to_string(ptr); \
+}
+    if (save_disabled_prm) {
+        OPT_LST("RateControl", list_rc, rate_control);
     }
-    OPT_NUM("threads", threads);
-    OPT_NUM("qpa", qpa);
+    if (cx->rate_control == get_cx_value(list_rc, L"CQP")) {
+        cmd << " --QP " << (int)(cx->qp);
+    } else {
+        cmd << " --TargetBitrate " << (int)(cx->bitrate) << "k";
+    }
+    OPT_NUM("InputBitDepth", bit_depth);
+    OPT_NUM("OutputBitDepth", bit_depth);
+    OPT_LST("InputChromaFormat", list_color_format, output_csp);
+    OPT_LST("preset", list_enc_mode, preset);
+    OPT_LST("Profile", list_profile_vvc, profile);
+    OPT_LST("Level", list_level_vvc, level);
+    OPT_LST("Tier", list_tier_vvc, tier);
+    OPT_NUM("Pass", pass);
+    OPT_NUM("PerceptQPA", qpa);
+
+    OPT_NUM("GOPSize", gopsize);
+    OPT_LST("DecodingRefreshType", list_refresh_type, refreshtype);
+    OPT_NUM("RefreshSec", refreshsec);
+    OPT_NUM("IntraPeriod", intraperiod);
+
+    OPT_LST("MatrixCoefficients", list_colormatrix, colormatrix);
+    OPT_LST("ColourPrimaries", list_colorprim, colorprim);
+    OPT_LST("TransferCharacteristics", list_transfer, transfer);
+    OPT_NUM("VideoFullRange", fullrange);
+    OPT_NUM("SarWidth", sar_x);
+    OPT_NUM("SarHeight", sar_y);
+
+    OPT_LST("LookAhead", list_lookahead, lookahead);
+    OPT_NUM("Threads", threads);
 
     return cmd.str();
 }
-/*
+
 void set_auto_colormatrix(CONF_ENCODER *cx, int height) {
-    if (cx->matrix_coefficients == COLOR_MATRIX_AUTO)
-        cx->matrix_coefficients = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_colormatrix, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
-    if (cx->color_primaries == COLOR_MATRIX_AUTO)
-        cx->color_primaries = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_colorprim, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
-    if (cx->transfer_characteristics == COLOR_MATRIX_AUTO)
-        cx->transfer_characteristics = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_transfer, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
+    if (cx->colormatrix == COLOR_MATRIX_AUTO)
+        cx->colormatrix = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_colormatrix, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
+    if (cx->colorprim == COLOR_MATRIX_AUTO)
+        cx->colorprim = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_colorprim, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
+    if (cx->transfer == COLOR_MATRIX_AUTO)
+        cx->transfer = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_transfer, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
 }
