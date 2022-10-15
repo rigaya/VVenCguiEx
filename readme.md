@@ -27,17 +27,17 @@ x86(32bit)環境では動作しません。
 
 ダウンロードしたzipファイルをダブルクリックして開きます。中身はこんな感じです。
 
-![zipファイルの中身](./data/VVenCguiEx_1_00_install_02.png)
+![zipファイルの中身](./data/VVenCguiEx_0_00_install_02.png)
 
 中身をすべてAviutlフォルダにコピーします。
 
-![中身のコピー](./data/VVenCguiEx_1_00_install_03.png)
+![中身のコピー](./data/VVenCguiEx_0_00_install_03.png)
 
 更新時には、下記のように上書きするか聞いてくることがあります。
 
 その場合には「ファイルを置き換える」を選択して上書きしてください。
 
-![上書き](./data/VVenCguiEx_1_00_install_04.png)
+![上書き](./data/VVenCguiEx_0_00_install_04.png)
   
   
   
@@ -47,13 +47,13 @@ x86(32bit)環境では動作しません。
 
 OKをクリックすると使用準備が開始されます。
 
-![初回起動時](./data/VVenCguiEx_1_00_install_05.png)
+![初回起動時](./data/VVenCguiEx_0_00_install_05.png)
   
   
   
 下の図のように、「この不明な発行元からのアプリがデバイスに変更を加えることを許可しますか?」というメッセージが表示されますので、「はい」をクリックしてください。
 
-![UAC](./data/VVenCguiEx_1_00_install_06.png)
+![UAC](./data/VVenCguiEx_0_00_install_06.png)
   
   
   
@@ -61,7 +61,7 @@ OKをクリックすると使用準備が開始されます。
 
 エラーなくインストールが完了すると下記のように表示されますので、右上の[x]ボタンでウィンドウを閉じてください。
 
-![auo_setup](./data/VVenCguiEx_1_00_install_11.png)
+![auo_setup](./data/VVenCguiEx_0_00_install_11.png)
 
 これで使用準備は完了です。
 
@@ -71,22 +71,22 @@ VVenCguiExがAviutlに認識されているか確認します。
 
 Aviutlの [その他] > [出力プラグイン情報]を選択します。
 
-![出力プラグイン情報](./data/VVenCguiEx_1_00_install_07.png)
+![出力プラグイン情報](./data/VVenCguiEx_0_00_install_07.png)
 
 
-VVenCguiEx 1.xxが表示されていれば成功です。
+VVenCguiEx 0.xxが表示されていれば成功です。
 
-![確認](./data/VVenCguiEx_1_00_install_09.png)
+![確認](./data/VVenCguiEx_0_00_install_09.png)
 
 
 ### エンコード
 [ ファイル ] > [ プラグイン出力 ] > [ 拡張 VVenC 出力 (GUI) Ex ] を選択し、出力ファイル名を入力して、「保存」をクリックしてください。
 
-![プラグイン出力](./data/VVenCguiEx_1_00_install_14.png)
+![プラグイン出力](./data/VVenCguiEx_0_00_install_14.png)
 
 エンコードが開始されます。
 
-![エンコード](./data/VVenCguiEx_1_00_install_10.png)
+![エンコード](./data/VVenCguiEx_0_00_install_10.jpg)
 
 エンコードが完了するまで待ちます。お疲れ様でした。
 
@@ -118,9 +118,7 @@ VVenCguiEx 1.xxが表示されていれば成功です。
 
 ## 多言語対応
 
-現在、日本語、英語、中国語の切り替えに対応しています。
-
-中国語については、Aviutlの中国語対応をされているNsyw様に翻訳いただきました。メッセージ量の多い中、ご対応いただき、ありがとうございました！
+現在、日本語、英語の切り替えに対応しています。
 
 他の言語については、VVenCguiEx.auoと同じフォルダに下記2ファイルを置くことで、新たな言語を追加できます。
 
@@ -147,7 +145,7 @@ VVenCguiEx の Aviutl から削除するには、"plugins" フォルダ内の下
 - [ファイル] VVenCguiEx(.ini)
 - [ファイル] auo_setup.auf
 
-![削除](./data/VVenCguiEx_1_00_uninstall_01.png)
+![削除](./data/VVenCguiEx_0_00_uninstall_01.png)
 
 
 ## ソースコードについて
