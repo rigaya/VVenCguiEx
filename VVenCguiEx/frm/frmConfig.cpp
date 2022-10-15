@@ -1032,6 +1032,8 @@ System::Void frmConfig::fcgCXRC_SelectedIndexChanged(System::Object ^sender, Sys
     fcgNUBitrate->Visible = videoBitrateMode;
     fcgLBKbps->Visible = videoBitrateMode;
     fcgNUQP->Visible = !videoBitrateMode;
+    fcgCB2PassAuto->Checked = videoBitrateMode;
+    fcgCB2PassAuto->Enabled = false;
 }
 
 System::Void frmConfig::InitForm() {
