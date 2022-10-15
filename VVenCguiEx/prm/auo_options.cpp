@@ -211,8 +211,9 @@ std::string gen_cmd(const CONF_ENCODER *cx, bool save_disabled_prm) {
     } else {
         cmd << " --TargetBitrate " << (int)(cx->bitrate) << "k";
     }
-    OPT_NUM("InputBitDepth", bit_depth);
-    OPT_NUM("OutputBitDepth", bit_depth);
+    cmd << " --InputBitDepth " << (int)(cx->bit_depth);
+    cmd << " --InternalBitDepth " << (int)(cx->bit_depth);
+    cmd << " --OutputBitDepth " << (int)(cx->bit_depth);
     OPT_LST("InputChromaFormat", list_color_format, output_csp);
     OPT_LST("preset", list_enc_mode, preset);
     OPT_LST("Profile", list_profile_vvc, profile);
