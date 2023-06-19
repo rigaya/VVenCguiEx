@@ -28,9 +28,9 @@
 #ifndef _AUO_VERSION_H_
 #define _AUO_VERSION_H_
 
-#define AUO_VERSION          0,0,0,4
-#define AUO_VERSION_STR      "0.00beta4"
-#define AUO_VERSION_STR_W   L"0.00beta4"
+#define AUO_VERSION          0,0,0,5
+#define AUO_VERSION_STR      "0.00beta5"
+#define AUO_VERSION_STR_W   L"0.00beta5"
 #define AUO_NAME_R            VVenCguiEx
 #define AUO_NAME_WITHOUT_EXT "VVenCguiEx"
 #define AUO_NAME_WITHOUT_EXT_W L"VVenCguiEx"
