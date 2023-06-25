@@ -589,7 +589,7 @@ BOOL check_output(CONF_GUIEX *conf, OUTPUT_INFO *oip, const PRM_ENC *pe, guiEx_s
                 }
                 if (!PathFileExists(aud_stg->fullpath)) {
                     //fawの場合はOK
-                    if (conf->aud.encoder != exstg->s_aud_faw_index)) {
+                    if (conf->aud.encoder != exstg->s_aud_faw_index) {
                         error_no_exe_file(aud_stg->dispname, aud_stg->fullpath);
                         check = FALSE;
                     }
