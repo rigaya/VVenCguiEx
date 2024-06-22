@@ -156,6 +156,8 @@ namespace AUO_NAME_R {
     private: System::Windows::Forms::Label^  fosLBDefaultAudioEncoder;
     private: System::Windows::Forms::CheckBox^  fosCBOutputMoreLog;
     private: System::Windows::Forms::Panel^  fosPNHideTabPage;
+    private: System::Windows::Forms::ComboBox^  fosCXPowerThrottling;
+    private: System::Windows::Forms::Label^  fosLBPowerThrottling;
 
 
 
@@ -198,6 +200,8 @@ namespace AUO_NAME_R {
             this->fosfontDialog = (gcnew System::Windows::Forms::FontDialog());
             this->fosTabControl = (gcnew System::Windows::Forms::TabControl());
             this->fostabPageGeneral = (gcnew System::Windows::Forms::TabPage());
+            this->fosCXPowerThrottling = (gcnew System::Windows::Forms::ComboBox());
+            this->fosLBPowerThrottling = (gcnew System::Windows::Forms::Label());
             this->fosCXDefaultAudioEncoder = (gcnew System::Windows::Forms::ComboBox());
             this->fosLBDefaultAudioEncoder = (gcnew System::Windows::Forms::Label());
             this->fosCBAutoRefLimitByLevel = (gcnew System::Windows::Forms::CheckBox());
@@ -317,6 +321,8 @@ namespace AUO_NAME_R {
             // 
             // fostabPageGeneral
             // 
+            this->fostabPageGeneral->Controls->Add(this->fosCXPowerThrottling);
+            this->fostabPageGeneral->Controls->Add(this->fosLBPowerThrottling);
             this->fostabPageGeneral->Controls->Add(this->fosCXDefaultAudioEncoder);
             this->fostabPageGeneral->Controls->Add(this->fosLBDefaultAudioEncoder);
             this->fostabPageGeneral->Controls->Add(this->fosCBAutoRefLimitByLevel);
@@ -335,6 +341,24 @@ namespace AUO_NAME_R {
             this->fostabPageGeneral->TabIndex = 0;
             this->fostabPageGeneral->Text = L"エンコード";
             this->fostabPageGeneral->UseVisualStyleBackColor = true;
+            // 
+            // fosCXPowerThrottling
+            // 
+            this->fosCXPowerThrottling->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+            this->fosCXPowerThrottling->FormattingEnabled = true;
+            this->fosCXPowerThrottling->Location = System::Drawing::Point(41, 162);
+            this->fosCXPowerThrottling->Name = L"fosCXPowerThrottling";
+            this->fosCXPowerThrottling->Size = System::Drawing::Size(190, 23);
+            this->fosCXPowerThrottling->TabIndex = 27;
+            // 
+            // fosLBPowerThrottling
+            // 
+            this->fosLBPowerThrottling->AutoSize = true;
+            this->fosLBPowerThrottling->Location = System::Drawing::Point(14, 139);
+            this->fosLBPowerThrottling->Name = L"fosLBPowerThrottling";
+            this->fosLBPowerThrottling->Size = System::Drawing::Size(89, 15);
+            this->fosLBPowerThrottling->TabIndex = 26;
+            this->fosLBPowerThrottling->Text = L"電力スロットリング";
             // 
             // fosCXDefaultAudioEncoder
             // 
@@ -836,6 +860,7 @@ namespace AUO_NAME_R {
             LOAD_CLI_TEXT(fosCBAutoDelChap);
             LOAD_CLI_TEXT(fostabPageGeneral);
             LOAD_CLI_TEXT(fosLBDefaultAudioEncoder);
+            LOAD_CLI_TEXT(fosLBPowerThrottling);
             LOAD_CLI_TEXT(fosCBAutoRefLimitByLevel);
             LOAD_CLI_TEXT(fosCBChapConvertToUTF8);
             LOAD_CLI_TEXT(fosCBKeepQPFile);
@@ -901,6 +926,7 @@ namespace AUO_NAME_R {
             fos_ex_stg->s_local.default_output_ext        = fosCXDefaultOutExt->SelectedIndex;
             fos_ex_stg->s_local.run_bat_minimized         = fosCBRunBatMinimized->Checked;
             fos_ex_stg->s_local.default_audio_encoder     = fosCXDefaultAudioEncoder->SelectedIndex;
+            fos_ex_stg->s_local.thread_pthrottling_mode   = (int)RGY_THREAD_POWER_THROTTOLING_MODE_STR[fosCXPowerThrottling->SelectedIndex].first;
             fos_ex_stg->save_local();
             fos_ex_stg->save_log_win();
             this->Close();
@@ -919,6 +945,12 @@ namespace AUO_NAME_R {
             for (int i = 0; i < fos_ex_stg->s_aud_count; i++)
                 fosCXDefaultAudioEncoder->Items->Add(String(fos_ex_stg->s_aud[i].dispname).ToString());
             fosCXDefaultAudioEncoder->ResumeLayout();
+
+            fosCXPowerThrottling->SuspendLayout();
+            fosCXPowerThrottling->Items->Clear();
+            for (int i = 0; i < RGY_THREAD_POWER_THROTTOLING_MODE_STR.size(); i++)
+                fosCXPowerThrottling->Items->Add(String(RGY_THREAD_POWER_THROTTOLING_MODE_STR[i].second).ToString());
+            fosCXPowerThrottling->ResumeLayout();
         }
     private:
         System::Void frmOtherSettings_Load(System::Object^  sender, System::EventArgs^  e) {
@@ -948,6 +980,12 @@ namespace AUO_NAME_R {
             fosCXDefaultOutExt->SelectedIndex       = fos_ex_stg->s_local.default_output_ext;
             fosCBRunBatMinimized->Checked           = fos_ex_stg->s_local.run_bat_minimized != 0;
             fosCXDefaultAudioEncoder->SelectedIndex = clamp(fos_ex_stg->s_local.default_audio_encoder, 0, fosCXDefaultAudioEncoder->Items->Count);
+            for (int i = 0; i < RGY_THREAD_POWER_THROTTOLING_MODE_STR.size(); i++) {
+                if ((int)RGY_THREAD_POWER_THROTTOLING_MODE_STR[i].first == fos_ex_stg->s_local.thread_pthrottling_mode) {
+                    fosCXPowerThrottling->SelectedIndex = i;
+                    break;
+                }
+            }
             if (str_has_char(fos_ex_stg->s_local.conf_font.name))
                 SetFontFamilyToForm(this, gcnew FontFamily(String(fos_ex_stg->s_local.conf_font.name).ToString()), this->Font->FontFamily);
             fosNUAMPLimitMargin_ValueChanged(nullptr, nullptr);

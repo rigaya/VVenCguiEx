@@ -836,6 +836,12 @@ static AUO_RESULT x264_out(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe
         PROCESS_TIME time_aviutl;
         GetProcessTime(pe->h_p_aviutl, &time_aviutl);
 
+        //Aviutlのpower throttlingを設定
+        const auto thread_pthrottling_mode = (RGYThreadPowerThrottlingMode)sys_dat->exstg->s_local.thread_pthrottling_mode;
+        if (thread_pthrottling_mode != RGYThreadPowerThrottlingMode::Unset) {
+            SetThreadPowerThrottolingModeForModule(GetCurrentProcessId(), nullptr, thread_pthrottling_mode);
+        }
+
         //svt-av1が待機に入るまでこちらも待機
         while (WaitForInputIdle(pi_enc.hProcess, LOG_UPDATE_INTERVAL) == WAIT_TIMEOUT)
             log_process_events();
@@ -961,6 +967,10 @@ static AUO_RESULT x264_out(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe
             ReadLogEnc(&pipes, pe->drop_count, i, oip->n);
 
         DWORD tm_vid_enc_fin = timeGetTime();
+
+        if (thread_pthrottling_mode != RGYThreadPowerThrottlingMode::Unset) {
+            SetThreadPowerThrottolingModeForModule(GetCurrentProcessId(), nullptr, RGYThreadPowerThrottlingMode::Unset);
+        }
 
         //最後にメッセージを取得
         while (ReadLogEnc(&pipes, pe->drop_count, i, oip->n) > 0);
