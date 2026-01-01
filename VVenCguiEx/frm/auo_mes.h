@@ -31,25 +31,26 @@
 #include <vector>
 #include <array>
 #include <string>
+#include "rgy_tchar.h"
 
 // 言語コードは2文字表記のiso639-1を用いる
-static const char *AUO_LANGUAGE_JA = "ja";
-static const char *AUO_LANGUAGE_EN = "en";
-static const char *AUO_LANGUAGE_ZH = "zh";
+static const wchar_t *AUO_LANGUAGE_JA = L"ja";
+static const wchar_t *AUO_LANGUAGE_EN = L"en";
+static const wchar_t *AUO_LANGUAGE_ZH = L"zh";
 // デフォルトは英語、ただしOSの言語設定および国コードで日本があらわれた場合、
 // 日本語をデフォルトとする (auo_settings.h/.cpp: guiEx_settings::get_default_lang())
-static const char *AUO_LANGUAGE_DEFAULT = AUO_LANGUAGE_EN;
+static const wchar_t *AUO_LANGUAGE_DEFAULT = AUO_LANGUAGE_EN;
 
 struct AUO_LANGUAGE {
-    const char *code;
+    const wchar_t *code;
     const wchar_t *name;
-    const char *resouce;
+    const wchar_t *resouce;
 };
 
 static const std::array<AUO_LANGUAGE, 2> list_auo_languages = {
-    AUO_LANGUAGE{ AUO_LANGUAGE_JA, L"日本語",  "SVTAV1GUIEX_JA_LNG" },
-    AUO_LANGUAGE{ AUO_LANGUAGE_EN, L"English", "SVTAV1GUIEX_EN_LNG" }
-    //AUO_LANGUAGE{ AUO_LANGUAGE_ZH, L"中文",    "SVTAV1GUIEX_ZH_LNG" }
+    AUO_LANGUAGE{ AUO_LANGUAGE_JA, L"日本語",  L"VVENCGUIEX_JA_LNG" },
+    AUO_LANGUAGE{ AUO_LANGUAGE_EN, L"English", L"VVENCGUIEX_EN_LNG" }
+    //AUO_LANGUAGE{ AUO_LANGUAGE_ZH, L"中文",    "VVENCGUIEX_ZH_LNG" }
 };
 
 enum AuoMesSections {
@@ -201,6 +202,14 @@ enum AuoMes {
     AUO_ERR_GET_PIPE_HANDLE,
     AUO_ERR_RUN_PROCESS,
     AUO_ERR_VIDEO_OUTPUT_THREAD_START,
+
+    AUO_ERR_VIDEO_CREATE_PARAM_MEM,
+    AUO_ERR_VIDEO_CREATE_EVENT,
+    AUO_ERR_VIDEO_WAIT_EVENT,
+    AUO_ERR_VIDEO_SET_EVENT,
+    AUO_ERR_VIDEO_OPEN_SHARED_INPUT_BUF,
+    AUO_ERR_VIDEO_GET_CONV_FUNC,
+
     AUO_ERR_QPFILE_FAILED,
     AUO_ERR_TCFILE_FAILED,
     AUO_ERR_MALLOC_PIXEL_DATA,
@@ -326,6 +335,9 @@ enum AuoMes {
     AUO_ERR_VIDEO_VERY_SHORT1,
     AUO_ERR_VIDEO_VERY_SHORT2,
 
+    AUO_ERR_EXEDIT_NOT_FOUND,
+    AUO_ERR_EXEDIT_OUTPUT_START,
+
     AUO_ERR_SECTION_FIN,
 
     //section = AUO_AUDIO
@@ -418,6 +430,8 @@ enum AuoMes {
     AUO_VIDEO_CHAPTER_AFS_ADJUST_FIN,
     AUO_VIDEO_SET_KEYFRAME_NOT_DETECTED,
     AUO_VIDEO_AFS_VBV_WARN,
+    AUO_VIDEO_AFS_AVIUTL_AND_VPP_CONFLICT1,
+    AUO_VIDEO_AFS_AVIUTL_AND_VPP_CONFLICT2,
     AUO_VIDEO_AUDIO_PROC_WAIT,
     AUO_VIDEO_CPU_USAGE,
     AUO_VIDEO_AVIUTL_PROC_AVG_TIME,
@@ -864,6 +878,7 @@ enum AuoMes {
         AuofosCBLogDisableTransparency,
         AuofosLBDisableVisualStyles,
         AuofosCBLogStartMinimized,
+        AuofosCBAutoSaveLog,
         AuofosLBStgDir,
         AuofosBTStgDir,
         AuofostabPageAMP,
@@ -884,11 +899,14 @@ enum AuoMes {
         AuofosLBAMPLimitMarginMax,
         AuofosLBAMPLimitMarginMin,
         AuofosCBAmpKeepOldFile,
+        AuofosCBPerfMonitor,
+        AuofosLBLogOut,
         AuofosMain,
         AUO_OTHER_SETTINGS_AMP_MARGIN_XS,
         AUO_OTHER_SETTINGS_AMP_MARGIN_S,
         AUO_OTHER_SETTINGS_AMP_MARGIN_M,
         AUO_OTHER_SETTINGS_AMP_MARGIN_L,
+        AUO_OTHER_SETTINGS_AUDIO_ENCODER_EXTERNAL,
     AUO_OTHER_SETTINGS_SECTION_FIN,
         
     //section = AUO_SAVE_NEW_STG
@@ -928,26 +946,26 @@ class AuoMessages {
 public:
     AuoMessages() : language(), messages() {};
     ~AuoMessages() {};
-    int read(const std::string& filename);
-    int read(const char *lang, const char *data, const size_t size);
+    int read(const tstring& filename);
+    int read(const TCHAR *lang, const char *data, const size_t size);
     AuoMesSections getSectionId(const std::string& section) const;
     AuoMes getId(const AuoMesSections sectionId, const std::string& id) const;
-    const std::string& getLang() const { return language; };
-    bool isLang(const char *lang) const {
-        if (lang == nullptr || strlen(lang) == 0 || language.length() == 0) return false;
-        return stricmp(lang, language.c_str()) == 0;
+    const tstring& getLang() const { return language; };
+    bool isLang(const TCHAR *lang) const {
+        if (lang == nullptr || wcslen(lang) == 0 || language.length() == 0) return false;
+        return _wcsicmp(lang, language.c_str()) == 0;
     }
-    const wchar_t *get(const AuoMes mesID) const {
-        return (mesID < (int)messages.size()) ? messages[mesID].c_str() : L"";
+    const TCHAR *get(const AuoMes mesID) const {
+        return (mesID < (int)messages.size()) ? messages[mesID].c_str() : _T("");
     }
 protected:
     void proc_line(AuoMesSections& sectionId, char *buffer);
-    std::string language;
+    tstring language;
     std::vector<std::wstring> messages;
 };
 
-std::string get_file_lang_code(const std::string& path);
-std::vector<std::string> find_lng_files();
+tstring get_file_lang_code(const tstring& path);
+std::vector<tstring> find_lng_files();
 
 extern AuoMessages g_auo_mes;
 

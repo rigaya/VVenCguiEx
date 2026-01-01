@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -201,6 +201,7 @@ namespace AUO_NAME_R {
         System::Void CheckTheme(const AuoTheme themeTo) {
             //変更の必要がなければ終了
             if (themeTo == themeMode) return;
+            if (dwStgReader == nullptr) return;
 
             //一度ウィンドウの再描画を完全に抑止する
             SendMessage(reinterpret_cast<HWND>(this->Handle.ToPointer()), WM_SETREDRAW, 0, 0);

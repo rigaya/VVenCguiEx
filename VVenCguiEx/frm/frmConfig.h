@@ -1192,7 +1192,7 @@ private: System::Windows::Forms::ComboBox^ fcgCXTempDir;
 private: System::Windows::Forms::ComboBox^ fcgCXX264Priority;
 private: System::Windows::Forms::Label^ fcgLBX264Priority;
 private: System::Windows::Forms::GroupBox^ fcggroupBoxExSettings;
-private: System::Windows::Forms::CheckBox^ fcgCBAfs24fpsMode;
+
 private: System::Windows::Forms::CheckBox^ fcgCBAuoTcfileout;
 private: System::Windows::Forms::CheckBox^ fcgCBAFSBitrateCorrection;
 private: System::Windows::Forms::CheckBox^ fcgCBAFS;
@@ -1225,6 +1225,7 @@ private: System::Windows::Forms::ComboBox^  fcgCXLookahead;
 
 private: System::Windows::Forms::Label^  fcgLBKeyint;
 private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
+private: System::Windows::Forms::CheckBox^  fcgCBBenchmarkMode;
 
 
 
@@ -1544,13 +1545,13 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
             this->fcgCXX264Priority = (gcnew System::Windows::Forms::ComboBox());
             this->fcgLBX264Priority = (gcnew System::Windows::Forms::Label());
             this->fcggroupBoxExSettings = (gcnew System::Windows::Forms::GroupBox());
-            this->fcgCBAfs24fpsMode = (gcnew System::Windows::Forms::CheckBox());
             this->fcgCBAuoTcfileout = (gcnew System::Windows::Forms::CheckBox());
             this->fcgCBAFSBitrateCorrection = (gcnew System::Windows::Forms::CheckBox());
             this->fcgCBAFS = (gcnew System::Windows::Forms::CheckBox());
             this->fcgPNHideTabControlAudio = (gcnew System::Windows::Forms::Panel());
             this->fcgPNHideTabControlMux = (gcnew System::Windows::Forms::Panel());
             this->fcgPNHideToolStripBorder = (gcnew System::Windows::Forms::Panel());
+            this->fcgCBBenchmarkMode = (gcnew System::Windows::Forms::CheckBox());
             this->fcgCSExeFiles->SuspendLayout();
             this->fcgtoolStripSettings->SuspendLayout();
             this->fcgtabControlMux->SuspendLayout();
@@ -3653,7 +3654,7 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
             // 
             // fcggroupBoxExSettings
             // 
-            this->fcggroupBoxExSettings->Controls->Add(this->fcgCBAfs24fpsMode);
+            this->fcggroupBoxExSettings->Controls->Add(this->fcgCBBenchmarkMode);
             this->fcggroupBoxExSettings->Controls->Add(this->fcgCBAuoTcfileout);
             this->fcggroupBoxExSettings->Controls->Add(this->fcgCBAFSBitrateCorrection);
             this->fcggroupBoxExSettings->Controls->Add(this->fcgCBAFS);
@@ -3663,17 +3664,6 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
             this->fcggroupBoxExSettings->TabIndex = 0;
             this->fcggroupBoxExSettings->TabStop = false;
             this->fcggroupBoxExSettings->Text = L"拡張設定";
-            // 
-            // fcgCBAfs24fpsMode
-            // 
-            this->fcgCBAfs24fpsMode->AutoSize = true;
-            this->fcgCBAfs24fpsMode->Location = System::Drawing::Point(34, 77);
-            this->fcgCBAfs24fpsMode->Name = L"fcgCBAfs24fpsMode";
-            this->fcgCBAfs24fpsMode->Size = System::Drawing::Size(67, 18);
-            this->fcgCBAfs24fpsMode->TabIndex = 2;
-            this->fcgCBAfs24fpsMode->Tag = L"chValue";
-            this->fcgCBAfs24fpsMode->Text = L"24fps化";
-            this->fcgCBAfs24fpsMode->UseVisualStyleBackColor = true;
             // 
             // fcgCBAuoTcfileout
             // 
@@ -3732,6 +3722,17 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
             this->fcgPNHideToolStripBorder->Size = System::Drawing::Size(1020, 4);
             this->fcgPNHideToolStripBorder->TabIndex = 16;
             this->fcgPNHideToolStripBorder->Visible = false;
+            // 
+            // fcgCBBenchmarkMode
+            // 
+            this->fcgCBBenchmarkMode->AutoSize = true;
+            this->fcgCBBenchmarkMode->Location = System::Drawing::Point(18, 205);
+            this->fcgCBBenchmarkMode->Name = L"fcgCBBenchmarkMode";
+            this->fcgCBBenchmarkMode->Size = System::Drawing::Size(102, 18);
+            this->fcgCBBenchmarkMode->TabIndex = 8;
+            this->fcgCBBenchmarkMode->Tag = L"chValue";
+            this->fcgCBBenchmarkMode->Text = L"ベンチマークモード";
+            this->fcgCBBenchmarkMode->UseVisualStyleBackColor = true;
             // 
             // frmConfig
             // 
@@ -3814,7 +3815,7 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
 #pragma endregion
     private:
         const SYSTEM_DATA *sys_dat;
-        std::vector<std::string> *list_lng;
+        std::vector<tstring> *list_lng;
         CONF_GUIEX *conf;
         LocalSettings LocalStg;
         DarkenWindowStgReader *dwStgReader;
@@ -3839,7 +3840,7 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
         System::Int32 GetCurrentAudioDefaultBitrate();
         delegate System::Void qualityTimerChangeDelegate();
         System::Void InitComboBox();
-        System::Void setAudioDisplay();
+        System::Void setAudioExtDisplay();
         System::Void AudioEncodeModeChanged();
         System::Void InitStgFileList();
         System::Void RebuildStgFileDropDown(String^ stgDir);
@@ -3863,8 +3864,8 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
         System::Void fcgTSTSettingsNotes_Leave(System::Object^  sender, System::EventArgs^  e);
         System::Void fcgTSTSettingsNotes_KeyDown(System::Object^  sender, System::Windows::Forms::KeyEventArgs^  e);
         System::Void fcgTSTSettingsNotes_TextChanged(System::Object^  sender, System::EventArgs^  e);
-        System::Void GetfcgTSLSettingsNotes(char *notes, int nSize);
-        System::Void SetfcgTSLSettingsNotes(const char *notes);
+        System::Void GetfcgTSLSettingsNotes(TCHAR *notes, int nSize);
+        System::Void SetfcgTSLSettingsNotes(const TCHAR *notes);
         System::Void SetfcgTSLSettingsNotes(String^ notes);
         System::Void fcgTSBSave_Click(System::Object^  sender, System::EventArgs^  e);
         System::Void fcgTSBSaveNew_Click(System::Object^  sender, System::EventArgs^  e);
@@ -3877,13 +3878,13 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
         System::Void CheckTSItemsEnabled(CONF_GUIEX *current_conf);
 
         System::Void InitLangList();
-        System::Void SaveSelectedLanguage(const char *language_text);
-        System::Void SetSelectedLanguage(const char *language_text);
+        System::Void SaveSelectedLanguage(const TCHAR *language_text);
+        System::Void SetSelectedLanguage(const TCHAR *language_text);
         System::Void CheckTSLanguageDropDownItem(ToolStripMenuItem^ mItem);
         System::Void fcgTSLanguage_DropDownItemClicked(System::Object^  sender, System::Windows::Forms::ToolStripItemClickedEventArgs^  e);
 
         System::Void SetHelpToolTips();
-        System::Void SetHelpToolTipsColorMatrix(Control^ control, const char *type);
+        System::Void SetHelpToolTipsColorMatrix(Control^ control, const TCHAR *type);
         System::Void SetX264VersionToolTip(String^ x264Path);
         System::Void ShowExehelp(String^ ExePath, String^ args);
         System::Void fcgTSBOtherSettings_Click(System::Object^  sender, System::EventArgs^  e);
@@ -3912,6 +3913,14 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
         System::Void SetVideoBitrate(int bitrate);
         System::Void SetAudioBitrate(int bitrate);
         System::Void InformfbcClosed();
+    private:
+        System::Boolean useAudioExt() {
+            #if ENCODER_X264 || ENCODER_X265 || ENCODER_SVTAV1 || ENCODER_VVENC
+                return true;
+            #else
+                return fcgCBAudioUseExt->Checked;
+            #endif
+        }
     private:
         System::Void fcgTSItem_MouseDown(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
             EnableSettingsNoteChange(false);
@@ -4329,13 +4338,13 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
             CONF_GUIEX cnf;
             init_CONF_GUIEX(&cnf, fcgCBUsehighbit->Checked);
             FrmToConf(&cnf);
-            char cmdex[2048] = { 0 };
-            GetCHARfromString(cmdex, sizeof(cmdex), fcgTXCmdEx->Text);
-            CONF_ENCODER enc = get_default_prm();
+            TCHAR cmdex[2048] = { 0 };
+            GetWCHARfromString(cmdex, _countof(cmdex), fcgTXCmdEx->Text);
+            CONF_ENC enc = get_default_prm();
             set_cmd(&enc, cnf.enc.cmd, true);
             set_cmd(&enc, cmdex, true);
             auto cmd_read = gen_cmd(&enc, false);
-            strcpy_s(cnf.enc.cmd, cmd_read.c_str());
+            _tcscpy_s(cnf.enc.cmd, cmd_read.c_str());
             ConfToFrm(&cnf, false);
         }
     private:
@@ -4598,7 +4607,7 @@ private: System::Windows::Forms::NumericUpDown^  fcgNUKeyint;
             array<ExeControls>^ ControlList = {
                 { fcgBTX264Path->Name,           fcgTXX264Path->Text,           sys_dat->exstg->s_enc.help_cmd },
                 { fcgBTX264PathSub->Name,        fcgTXX264PathSub->Text,        sys_dat->exstg->s_enc.help_cmd },
-                { fcgBTAudioEncoderPath->Name,   fcgTXAudioEncoderPath->Text,   sys_dat->exstg->s_aud[fcgCXAudioEncoder->SelectedIndex].cmd_help },
+                { fcgBTAudioEncoderPath->Name,   fcgTXAudioEncoderPath->Text,   sys_dat->exstg->s_aud_ext[fcgCXAudioEncoder->SelectedIndex].cmd_help },
                 { fcgBTMP4MuxerPath->Name,       fcgTXMP4MuxerPath->Text,       sys_dat->exstg->s_mux[MUXER_MP4].help_cmd },
                 { fcgBTTC2MP4Path->Name,         fcgTXTC2MP4Path->Text,         sys_dat->exstg->s_mux[MUXER_TC2MP4].help_cmd },
                 { fcgBTMP4RawPath->Name,         fcgTXMP4RawPath->Text,         sys_dat->exstg->s_mux[MUXER_MP4_RAW].help_cmd },

@@ -1,0 +1,4 @@
+﻿LIBRARY "VVenCguiEx.auo2"
+
+EXPORTS
+    GetOutputPluginTable

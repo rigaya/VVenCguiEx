@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -30,6 +30,7 @@
 #include "auo_version.h"
 #include "auo_settings.h"
 #include "auo_mes.h"
+#include "rgy_thread_affinity.h"
 
 using namespace System;
 using namespace System::ComponentModel;
@@ -158,6 +159,9 @@ namespace AUO_NAME_R {
     private: System::Windows::Forms::Panel^  fosPNHideTabPage;
     private: System::Windows::Forms::ComboBox^  fosCXPowerThrottling;
     private: System::Windows::Forms::Label^  fosLBPowerThrottling;
+private: System::Windows::Forms::TextBox^  fosTXAutoSaveLog;
+private: System::Windows::Forms::CheckBox^  fosCBAutoSaveLog;
+private: System::Windows::Forms::ComboBox^  fosCXAutoSaveLog;
 
 
 
@@ -212,6 +216,9 @@ namespace AUO_NAME_R {
             this->fosCXDefaultOutExt = (gcnew System::Windows::Forms::ComboBox());
             this->fosLBDefaultOutExt = (gcnew System::Windows::Forms::Label());
             this->fostabPageGUI = (gcnew System::Windows::Forms::TabPage());
+            this->fosTXAutoSaveLog = (gcnew System::Windows::Forms::TextBox());
+            this->fosCBAutoSaveLog = (gcnew System::Windows::Forms::CheckBox());
+            this->fosCXAutoSaveLog = (gcnew System::Windows::Forms::ComboBox());
             this->fosCBOutputMoreLog = (gcnew System::Windows::Forms::CheckBox());
             this->fosCBGetRelativePath = (gcnew System::Windows::Forms::CheckBox());
             this->fosBTSetFont = (gcnew System::Windows::Forms::Button());
@@ -281,7 +288,7 @@ namespace AUO_NAME_R {
             // 
             // fosCBAutoAFSDisable
             // 
-            this->fosCBAutoAFSDisable->Location = System::Drawing::Point(17, 146);
+            this->fosCBAutoAFSDisable->Location = System::Drawing::Point(17, 198);
             this->fosCBAutoAFSDisable->Name = L"fosCBAutoAFSDisable";
             this->fosCBAutoAFSDisable->Size = System::Drawing::Size(308, 53);
             this->fosCBAutoAFSDisable->TabIndex = 6;
@@ -291,7 +298,7 @@ namespace AUO_NAME_R {
             // fosCBAutoDelChap
             // 
             this->fosCBAutoDelChap->AutoSize = true;
-            this->fosCBAutoDelChap->Location = System::Drawing::Point(17, 205);
+            this->fosCBAutoDelChap->Location = System::Drawing::Point(17, 257);
             this->fosCBAutoDelChap->Name = L"fosCBAutoDelChap";
             this->fosCBAutoDelChap->Size = System::Drawing::Size(295, 19);
             this->fosCBAutoDelChap->TabIndex = 13;
@@ -381,9 +388,9 @@ namespace AUO_NAME_R {
             // fosCBAutoRefLimitByLevel
             // 
             this->fosCBAutoRefLimitByLevel->AutoSize = true;
-            this->fosCBAutoRefLimitByLevel->Location = System::Drawing::Point(17, 288);
+            this->fosCBAutoRefLimitByLevel->Location = System::Drawing::Point(17, 340);
             this->fosCBAutoRefLimitByLevel->Name = L"fosCBAutoRefLimitByLevel";
-            this->fosCBAutoRefLimitByLevel->Size = System::Drawing::Size(283, 19);
+            this->fosCBAutoRefLimitByLevel->Size = System::Drawing::Size(239, 19);
             this->fosCBAutoRefLimitByLevel->TabIndex = 23;
             this->fosCBAutoRefLimitByLevel->Text = L"参照距離をレベルに応じて自動的に制限する";
             this->fosCBAutoRefLimitByLevel->UseVisualStyleBackColor = true;
@@ -391,7 +398,7 @@ namespace AUO_NAME_R {
             // fosCBChapConvertToUTF8
             // 
             this->fosCBChapConvertToUTF8->AutoSize = true;
-            this->fosCBChapConvertToUTF8->Location = System::Drawing::Point(17, 261);
+            this->fosCBChapConvertToUTF8->Location = System::Drawing::Point(17, 313);
             this->fosCBChapConvertToUTF8->Name = L"fosCBChapConvertToUTF8";
             this->fosCBChapConvertToUTF8->Size = System::Drawing::Size(204, 19);
             this->fosCBChapConvertToUTF8->TabIndex = 22;
@@ -401,7 +408,7 @@ namespace AUO_NAME_R {
             // fosCBKeepQPFile
             // 
             this->fosCBKeepQPFile->AutoSize = true;
-            this->fosCBKeepQPFile->Location = System::Drawing::Point(17, 234);
+            this->fosCBKeepQPFile->Location = System::Drawing::Point(17, 286);
             this->fosCBKeepQPFile->Name = L"fosCBKeepQPFile";
             this->fosCBKeepQPFile->Size = System::Drawing::Size(260, 19);
             this->fosCBKeepQPFile->TabIndex = 21;
@@ -450,6 +457,9 @@ namespace AUO_NAME_R {
             // 
             // fostabPageGUI
             // 
+            this->fostabPageGUI->Controls->Add(this->fosTXAutoSaveLog);
+            this->fostabPageGUI->Controls->Add(this->fosCBAutoSaveLog);
+            this->fostabPageGUI->Controls->Add(this->fosCXAutoSaveLog);
             this->fostabPageGUI->Controls->Add(this->fosCBOutputMoreLog);
             this->fostabPageGUI->Controls->Add(this->fosCBGetRelativePath);
             this->fostabPageGUI->Controls->Add(this->fosBTSetFont);
@@ -464,10 +474,38 @@ namespace AUO_NAME_R {
             this->fostabPageGUI->Controls->Add(this->fosTXStgDir);
             this->fostabPageGUI->Location = System::Drawing::Point(4, 24);
             this->fostabPageGUI->Name = L"fostabPageGUI";
-            this->fostabPageGUI->Size = System::Drawing::Size(380, 369);
+            this->fostabPageGUI->Size = System::Drawing::Size(380, 372);
             this->fostabPageGUI->TabIndex = 2;
             this->fostabPageGUI->Text = L"ログ・設定画面";
             this->fostabPageGUI->UseVisualStyleBackColor = true;
+            // 
+            // fosTXAutoSaveLog
+            // 
+            this->fosTXAutoSaveLog->Location = System::Drawing::Point(43, 337);
+            this->fosTXAutoSaveLog->Name = L"fosTXAutoSaveLog";
+            this->fosTXAutoSaveLog->Size = System::Drawing::Size(290, 23);
+            this->fosTXAutoSaveLog->TabIndex = 34;
+            // 
+            // fosCBAutoSaveLog
+            // 
+            this->fosCBAutoSaveLog->AutoSize = true;
+            this->fosCBAutoSaveLog->Location = System::Drawing::Point(20, 313);
+            this->fosCBAutoSaveLog->Name = L"fosCBAutoSaveLog";
+            this->fosCBAutoSaveLog->Size = System::Drawing::Size(92, 19);
+            this->fosCBAutoSaveLog->TabIndex = 33;
+            this->fosCBAutoSaveLog->Text = L"ログ自動保存";
+            this->fosCBAutoSaveLog->UseVisualStyleBackColor = true;
+            this->fosCBAutoSaveLog->CheckedChanged += gcnew System::EventHandler(this, &frmOtherSettings::fosCBAutoSaveLog_CheckedChanged);
+            // 
+            // fosCXAutoSaveLog
+            // 
+            this->fosCXAutoSaveLog->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+            this->fosCXAutoSaveLog->FormattingEnabled = true;
+            this->fosCXAutoSaveLog->Location = System::Drawing::Point(119, 311);
+            this->fosCXAutoSaveLog->Name = L"fosCXAutoSaveLog";
+            this->fosCXAutoSaveLog->Size = System::Drawing::Size(140, 23);
+            this->fosCXAutoSaveLog->TabIndex = 32;
+            this->fosCXAutoSaveLog->SelectedIndexChanged += gcnew System::EventHandler(this, &frmOtherSettings::fosCXAutoSaveLog_SelectedIndexChanged);
             // 
             // fosCBOutputMoreLog
             // 
@@ -594,8 +632,8 @@ namespace AUO_NAME_R {
             this->fostabPageAMP->Controls->Add(this->fosCBAmpKeepOldFile);
             this->fostabPageAMP->Location = System::Drawing::Point(4, 24);
             this->fostabPageAMP->Name = L"fostabPageAMP";
-            this->fostabPageAMP->Padding = System::Windows::Forms::Padding(3);
-            this->fostabPageAMP->Size = System::Drawing::Size(380, 369);
+            this->fostabPageAMP->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+            this->fostabPageAMP->Size = System::Drawing::Size(380, 372);
             this->fostabPageAMP->TabIndex = 1;
             this->fostabPageAMP->Text = L"自動マルチパス";
             this->fostabPageAMP->UseVisualStyleBackColor = true;
@@ -877,6 +915,7 @@ namespace AUO_NAME_R {
             LOAD_CLI_TEXT(fosCBLogDisableTransparency);
             LOAD_CLI_TEXT(fosLBDisableVisualStyles);
             LOAD_CLI_TEXT(fosCBLogStartMinimized);
+            LOAD_CLI_TEXT(fosCBAutoSaveLog);
             LOAD_CLI_TEXT(fosLBStgDir);
             LOAD_CLI_TEXT(fosBTStgDir);
             LOAD_CLI_TEXT(fostabPageAMP);
@@ -922,15 +961,46 @@ namespace AUO_NAME_R {
             fos_ex_stg->s_log.minimized                   = fosCBLogStartMinimized->Checked;
             fos_ex_stg->s_log.transparent                 = !fosCBLogDisableTransparency->Checked;
             fos_ex_stg->s_log.log_level                   =(fosCBOutputMoreLog->Checked) ? LOG_MORE : LOG_INFO;
+            fos_ex_stg->s_log.auto_save_log               = fosCBAutoSaveLog->Checked;
+            fos_ex_stg->s_log.auto_save_log_mode          = fosCXAutoSaveLog->SelectedIndex;
+            GetWCHARfromString(fos_ex_stg->s_log.auto_save_log_path, fosTXAutoSaveLog->Text);
             fos_ex_stg->s_local.get_relative_path         = fosCBGetRelativePath->Checked;
             fos_ex_stg->s_local.default_output_ext        = fosCXDefaultOutExt->SelectedIndex;
             fos_ex_stg->s_local.run_bat_minimized         = fosCBRunBatMinimized->Checked;
-            fos_ex_stg->s_local.default_audio_encoder     = fosCXDefaultAudioEncoder->SelectedIndex;
+            const int default_encoder = fosCXDefaultAudioEncoder->SelectedIndex;
+            if (default_encoder >= fos_ex_stg->s_aud_int_count) {
+                fos_ex_stg->s_local.default_audio_encoder_ext = default_encoder - fos_ex_stg->s_aud_int_count;
+                fos_ex_stg->s_local.default_audenc_use_in = FALSE;
+            } else {
+                fos_ex_stg->s_local.default_audio_encoder_in = default_encoder;
+                fos_ex_stg->s_local.default_audenc_use_in = TRUE;
+            }
             fos_ex_stg->s_local.thread_pthrottling_mode   = (int)RGY_THREAD_POWER_THROTTOLING_MODE_STR[fosCXPowerThrottling->SelectedIndex].first;
             fos_ex_stg->save_local();
             fos_ex_stg->save_log_win();
             this->Close();
 
+        }
+    private:
+        System::Void setComboBox(ComboBox^ CX, const AuoMes* list) {
+            const int itemCount = CX->Items->Count;
+            bool textExists = true;
+            for (int i = 0; i < itemCount; i++) {
+                if (list[i] == AUO_MES_UNKNOWN) {
+                    textExists = false;
+                    break;
+                }
+            }
+            if (!textExists) return;
+
+            CX->BeginUpdate();
+            const int prevIdx = CX->SelectedIndex;
+            CX->Items->Clear();
+            for (int i = 0; i < itemCount; i++) {
+                CX->Items->Add(LOAD_CLI_STRING(list[i]));
+            }
+            SetCXIndex(CX, prevIdx);
+            CX->EndUpdate();
         }
     private:
         System::Void fosSetComboBox() {
@@ -942,15 +1012,31 @@ namespace AUO_NAME_R {
 
             fosCXDefaultAudioEncoder->SuspendLayout();
             fosCXDefaultAudioEncoder->Items->Clear();
-            for (int i = 0; i < fos_ex_stg->s_aud_count; i++)
-                fosCXDefaultAudioEncoder->Items->Add(String(fos_ex_stg->s_aud[i].dispname).ToString());
+            for (int i = 0; i < fos_ex_stg->s_aud_int_count; i++)
+                fosCXDefaultAudioEncoder->Items->Add(String(fos_ex_stg->s_aud_int[i].dispname).ToString());
+            for (int i = 0; i < fos_ex_stg->s_aud_ext_count; i++)
+                fosCXDefaultAudioEncoder->Items->Add(LOAD_CLI_STRING(AUO_OTHER_SETTINGS_AUDIO_ENCODER_EXTERNAL) + L": " + String(fos_ex_stg->s_aud_ext[i].dispname).ToString());
             fosCXDefaultAudioEncoder->ResumeLayout();
 
             fosCXPowerThrottling->SuspendLayout();
             fosCXPowerThrottling->Items->Clear();
-            for (int i = 0; i < RGY_THREAD_POWER_THROTTOLING_MODE_STR.size(); i++)
+            for (size_t i = 0; i < RGY_THREAD_POWER_THROTTOLING_MODE_STR.size(); i++)
                 fosCXPowerThrottling->Items->Add(String(RGY_THREAD_POWER_THROTTOLING_MODE_STR[i].second).ToString());
             fosCXPowerThrottling->ResumeLayout();
+
+            const AuoMes listCXMes[] = { AUO_AUTO_SAVE_LOG_SAME_AS_OUTPUT, AUO_AUTO_SAVE_LOG_CUSTOM };
+            fosCXAutoSaveLog->SuspendLayout();
+            fosCXAutoSaveLog->Items->Clear();
+            for (int i = 0; i < _countof(listCXMes); i++) {
+                fosCXAutoSaveLog->Items->Add(LOAD_CLI_STRING(listCXMes[i]));
+            }
+            fosCXAutoSaveLog->ResumeLayout();
+        }
+    private:
+        System::Void SetCXIndex(ComboBox^ CX, int index) {
+            if (CX->Items->Count > 0) {
+                CX->SelectedIndex = clamp(index, 0, CX->Items->Count - 1);
+            }
         }
     private:
         System::Void frmOtherSettings_Load(System::Object^  sender, System::EventArgs^  e) {
@@ -976,11 +1062,18 @@ namespace AUO_NAME_R {
             fosCBLogStartMinimized->Checked         = fos_ex_stg->s_log.minimized != 0;
             fosCBLogDisableTransparency->Checked    = fos_ex_stg->s_log.transparent == 0;
             fosCBOutputMoreLog->Checked             = fos_ex_stg->s_log.log_level != LOG_INFO;
+            fosCBAutoSaveLog->Checked               = fos_ex_stg->s_log.auto_save_log;
+            SetCXIndex(fosCXAutoSaveLog,              fos_ex_stg->s_log.auto_save_log_mode);
+            fosTXAutoSaveLog->Text                  = String(fos_ex_stg->s_log.auto_save_log_path).ToString();
             fosCBGetRelativePath->Checked           = fos_ex_stg->s_local.get_relative_path != 0;
             fosCXDefaultOutExt->SelectedIndex       = fos_ex_stg->s_local.default_output_ext;
             fosCBRunBatMinimized->Checked           = fos_ex_stg->s_local.run_bat_minimized != 0;
-            fosCXDefaultAudioEncoder->SelectedIndex = clamp(fos_ex_stg->s_local.default_audio_encoder, 0, fosCXDefaultAudioEncoder->Items->Count);
-            for (int i = 0; i < RGY_THREAD_POWER_THROTTOLING_MODE_STR.size(); i++) {
+            if (fos_ex_stg->s_local.default_audenc_use_in) {
+                fosCXDefaultAudioEncoder->SelectedIndex = clamp(fos_ex_stg->s_local.default_audio_encoder_in, 0, fos_ex_stg->s_aud_int_count-1);
+            } else {
+                fosCXDefaultAudioEncoder->SelectedIndex = clamp(fos_ex_stg->s_local.default_audio_encoder_ext, 0, fos_ex_stg->s_aud_ext_count-1) + fos_ex_stg->s_aud_int_count;
+            }
+            for (int i = 0; i < (int)RGY_THREAD_POWER_THROTTOLING_MODE_STR.size(); i++) {
                 if ((int)RGY_THREAD_POWER_THROTTOLING_MODE_STR[i].first == fos_ex_stg->s_local.thread_pthrottling_mode) {
                     fosCXPowerThrottling->SelectedIndex = i;
                     break;
@@ -1074,6 +1167,7 @@ namespace AUO_NAME_R {
         System::Void frmOtherSettings::CheckTheme(const AuoTheme themeTo) {
             //変更の必要がなければ終了
             if (themeTo == themeMode) return;
+            if (dwStgReader == nullptr) return;
 
             //一度ウィンドウの再描画を完全に抑止する
             SendMessage(reinterpret_cast<HWND>(this->Handle.ToPointer()), WM_SETREDRAW, 0, 0);
@@ -1105,6 +1199,15 @@ namespace AUO_NAME_R {
             for (int i = 0; i < top->Controls->Count; i++) {
                 SetAllMouseMove(top->Controls[i], themeTo);
             }
+        }
+    private:
+        System::Void fosCBAutoSaveLog_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
+            fosCXAutoSaveLog->Enabled = fosCBAutoSaveLog->Checked;
+            fosTXAutoSaveLog->Visible = fosCBAutoSaveLog->Checked && (fosCXAutoSaveLog->SelectedIndex == AUO_AUTO_SAVE_LOG_CUSTOM);
+        }
+    private:
+        System::Void fosCXAutoSaveLog_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
+            fosTXAutoSaveLog->Visible = fosCBAutoSaveLog->Checked && (fosCXAutoSaveLog->SelectedIndex == AUO_AUTO_SAVE_LOG_CUSTOM);
         }
 };
 }

@@ -1,0 +1,5 @@
+;!@Install@!UTF-8!
+Title="AviUtl ExEdit2 向け VVenCguiEx インストーラ"
+BeginPrompt="VVenCguiExをインストールしますか？"
+RunProgram="Plugin\exe_files\auo_setup2.exe"
+;!@InstallEnd@!

@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <Math.h>
+#include <cmath>
 #include <limits.h>
 #include <vector>
 #include <string>
@@ -50,46 +50,9 @@ void set_ex_stg_ptr(guiEx_settings *_ex_stg) {
     ex_stg = _ex_stg;
 }
 
-void set_guiEx_auto_sar(int *sar_x, int *sar_y, int width, int height) {
-    if (width > 0 && height > 0 && *sar_x < 0 && *sar_y < 0) {
-        int x = -1 * *sar_x * height;
-        int y = -1 * *sar_y * width;
-        if (abs(y - x) > -16 * *sar_y) {
-            int gcd = get_gcd(x, y);
-            *sar_x = x / gcd;
-            *sar_y = y / gcd;
-        } else {
-            *sar_x = *sar_y = 1;
-        }
-    } else if (*sar_x * *sar_y < 0) {
-        *sar_x = *sar_y = 0;
-    }
-}
-
-std::vector<std::wstring> sep_cmd(const std::wstring &cmd) {
-    std::vector<std::wstring> args;
-    int argc = 0;
-    auto ptr = CommandLineToArgvW(cmd.c_str(), &argc);
-    for (int i = 0; i < argc; i++) {
-        args.push_back(ptr[i]);
-    }
-    args.push_back(L"");
-    LocalFree(ptr);
-    return std::move(args);
-}
-
-std::vector<std::string> sep_cmd(const std::string &cmd) {
-    std::vector<std::string> args;
-    std::wstring wcmd = char_to_wstring(cmd);
-    for (const auto &warg : sep_cmd(wcmd)) {
-        args.push_back(wstring_to_string(warg));
-    }
-    return std::move(args);
-}
-
-int parse_one_option(CONF_ENCODER *cx, const char *option_name, const std::vector<std::string>& argv, int &i, int nArgNum) {
-#define IS_OPTION(x) (std::string(x) == option_name)
-    auto to_int = [](int *value, const std::string& argv) {
+int parse_one_option(CONF_ENC *cx, const TCHAR *option_name, const std::vector<tstring>& argv, int &i, int nArgNum) {
+#define IS_OPTION(x) (tstring(_T(x)) == option_name)
+    auto to_int = [](int *value, const tstring& argv) {
         try {
             *value = std::stoi(argv);
         } catch (...) {
@@ -97,8 +60,8 @@ int parse_one_option(CONF_ENCODER *cx, const char *option_name, const std::vecto
         }
         return 0;
     };
-    auto list_to_int = [](int *value, const CX_DESC_AUO *list, const std::string& argv) {
-        auto val = get_value_from_chr(list, char_to_wstring(argv).c_str());
+    auto list_to_int = [](int *value, const CX_DESC_AUO *list, const tstring& argv) {
+        auto val = get_value_from_chr(list, tchar_to_wstring(argv).c_str());
         if (val == -1) {
             return 1;
         }
@@ -119,7 +82,7 @@ int parse_one_option(CONF_ENCODER *cx, const char *option_name, const std::vecto
     if (IS_OPTION("TargetBitrate")) {
         i++;
         int value = 0;
-        if (sscanf_s(argv[i].c_str(), "%dk", &value) != 1) {
+        if (_stscanf_s(argv[i].c_str(), _T("%dk"), &value) != 1) {
             return 1;
         }
         cx->bitrate = value;
@@ -159,10 +122,10 @@ int parse_one_option(CONF_ENCODER *cx, const char *option_name, const std::vecto
 #undef IS_OPTION
 }
 
-int set_cmd(CONF_ENCODER *cx, const char *cmd, const bool ignore_parse_err) {
+int set_cmd(CONF_ENC *cx, const TCHAR *cmd, const bool ignore_parse_err) {
     auto args = sep_cmd(cmd);
     for (int i = 0; i < args.size(); i++) {
-        const char *option_name = nullptr;
+        const TCHAR *option_name = nullptr;
         if (args[i][0] == '|') {
             break;
         } else if (args[i][0] == '-' && args[i][1] == 'q') {
@@ -183,37 +146,37 @@ int set_cmd(CONF_ENCODER *cx, const char *cmd, const bool ignore_parse_err) {
     return 0;
 }
 
-CONF_ENCODER get_default_prm() {
-    CONF_ENCODER prm;
+CONF_ENC get_default_prm() {
+    CONF_ENC prm;
     memset(&prm, 0, sizeof(prm));
     set_cmd(&prm, ex_stg->s_enc.default_cmd, true);
     return prm;
 }
 
-int parse_cmd(CONF_ENCODER *cx, const char *cmd, const bool ignore_parse_err) {
+int parse_cmd(CONF_ENC *cx, const TCHAR *cmd, const bool ignore_parse_err) {
     *cx = get_default_prm();
     return set_cmd(cx, cmd, ignore_parse_err);
 }
 
-std::string gen_cmd(const CONF_ENCODER *cx, bool save_disabled_prm) {
-    std::stringstream cmd;
-    CONF_ENCODER encPrmDefault = get_default_prm();
-#define OPT_NUM(str, opt) if ((cx->opt) != (encPrmDefault.opt)) cmd << " --" << (str) << " " << (int)(cx->opt);
+tstring gen_cmd(const CONF_ENC *cx, bool save_disabled_prm) {
+    std::basic_stringstream<TCHAR> cmd;
+    CONF_ENC encPrmDefault = get_default_prm();
+#define OPT_NUM(str, opt) if ((cx->opt) != (encPrmDefault.opt)) cmd << _T(" --") << _T(str) << _T(" ") << (int)(cx->opt);
 #define OPT_LST(str, list, opt) if ((cx->opt) != (encPrmDefault.opt)) { \
     auto ptr = get_cx_desc(list, cx->opt); \
-    if (ptr) cmd << " --" << (str) << " " << wstring_to_string(ptr); \
+    if (ptr) cmd << _T(" --") << _T(str) << _T(" ") << wstring_to_tstring(ptr); \
 }
     if (save_disabled_prm) {
         OPT_LST("RateControl", list_rc, rate_control);
     }
     if (cx->rate_control == get_cx_value(list_rc, L"CQP")) {
-        cmd << " --QP " << (int)(cx->qp);
+        cmd << _T(" --QP ") << (int)(cx->qp);
     } else {
-        cmd << " --TargetBitrate " << (int)(cx->bitrate) << "k";
+        cmd << _T(" --TargetBitrate ") << (int)(cx->bitrate) << _T("k");
     }
-    cmd << " --InputBitDepth " << (int)(cx->bit_depth);
-    cmd << " --InternalBitDepth " << (int)(cx->bit_depth);
-    cmd << " --OutputBitDepth " << (int)(cx->bit_depth);
+    cmd << _T(" --InputBitDepth ") << (int)(cx->bit_depth);
+    cmd << _T(" --InternalBitDepth ") << (int)(cx->bit_depth);
+    cmd << _T(" --OutputBitDepth ") << (int)(cx->bit_depth);
     OPT_LST("InputChromaFormat", list_color_format, output_csp);
     OPT_LST("preset", list_enc_mode, preset);
     OPT_LST("Profile", list_profile_vvc, profile);
@@ -240,7 +203,7 @@ std::string gen_cmd(const CONF_ENCODER *cx, bool save_disabled_prm) {
     return cmd.str();
 }
 
-void set_auto_colormatrix(CONF_ENCODER *cx, int height) {
+void set_auto_colormatrix(CONF_ENC *cx, int height) {
     if (cx->colormatrix == COLOR_MATRIX_AUTO)
         cx->colormatrix = (height >= COLOR_MATRIX_THRESHOLD) ? get_cx_value(list_colormatrix, L"bt709") : get_cx_value(list_colormatrix, L"bt601");
     if (cx->colorprim == COLOR_MATRIX_AUTO)

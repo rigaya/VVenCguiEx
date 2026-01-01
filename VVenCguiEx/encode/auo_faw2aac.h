@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -28,7 +28,6 @@
 #ifndef _AUO_FAW2AAC_H_
 #define _AUO_FAW2AAC_H_
 
-#include "output.h"
 #include "auo.h"
 #include "auo_version.h"
 #include "auo_util.h"

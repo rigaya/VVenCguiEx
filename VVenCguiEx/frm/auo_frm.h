@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -31,10 +31,16 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
+#include <string>
 #include "auo_conf.h"
 #include "auo_system.h"
 
 const int LOG_UPDATE_INTERVAL = 50;
+
+#if AVIUTL_TARGET_VER == 2
+struct LOG_HANDLE;
+void set_aviutl2_logger(LOG_HANDLE *logger);
+#endif
 
 enum {
     LOG_TRACE   = -3,
@@ -57,11 +63,30 @@ typedef struct {
     wchar_t **lines; //格納している一行
 } LOG_CACHE;
 
+class WindowTitleOverride {
+    protected:
+    HWND hwnd;
+    std::wstring original_title;
+    bool has_original_title;
+    // エンコード進捗表示用
+    DWORD enc_start_time;
+    bool add_progress;
+    bool using_afs;
+    int total_frame;
+    public:
+    WindowTitleOverride();
+    ~WindowTitleOverride();
+    void override_window_title(const wchar_t *chr);
+    void set_enc_info(BOOL afs, BOOL _add_progress, DWORD start_time, int _total_frame);
+    void clear_enc_info();
+    std::wstring format_window_title_enc_mes(const wchar_t *chr, int total_drop, int frame_n) const;
+};
+
 //設定ウィンドウ
 void ShowfrmConfig(CONF_GUIEX *conf, const SYSTEM_DATA *sys_dat);
 
 //ログウィンドウ制御
-void show_log_window(const char *aviutl_dir, BOOL disable_visual_styles);
+void show_log_window(const TCHAR *aviutl_dir, BOOL disable_visual_styles);
 void set_window_title(const wchar_t *chr);
 void set_window_title(const wchar_t *chr, int progress_mode);
 void set_window_title_enc_mes(const wchar_t *chr, int total_drop, int frame_n);
@@ -72,19 +97,21 @@ void write_log_line_b(int log_type_index, const char *chr, bool from_utf8 = fals
 void write_log_auo_line(int log_type_index, const wchar_t *chr);
 void write_log_line(int log_type_index, const wchar_t *chr);
 void flush_audio_log();
-void enable_x264_control(DWORD *priority, BOOL *enc_pause, BOOL afs, BOOL add_progress, DWORD start_time, int _total_frame);
-void disable_x264_control();
+void enable_enc_control(DWORD *priority, bool *enc_pause, BOOL afs, BOOL add_progress, DWORD start_time, int _total_frame);
+void disable_enc_control();
 void set_prevent_log_close(BOOL prevent);
-void auto_save_log_file(const char *log_filepath);
+void auto_save_log_file(const TCHAR *log_filepath);
 void log_process_events();
 int  get_current_log_len(bool first_pass);
 void log_reload_settings();
+void close_log_window();
+bool is_log_window_closed();
 
 int init_log_cache(LOG_CACHE *log_cache); //LOG_CACHEの初期化、linesのメモリ確保、成功->0, 失敗->1
 void release_log_cache(LOG_CACHE *log_cache); //LOG_CACHEで使用しているメモリの開放
 
-void write_log_enc_mes(char * const mes, DWORD *log_len, int total_drop, int current_frames, int total_frames);
+void write_log_enc_mes(char * const mes, DWORD *log_len, int total_drop, int current_frames, int total_frames, LOG_CACHE *cache_line = nullptr);
 void write_log_exe_mes(char *const msg, DWORD *log_len, const wchar_t *exename, LOG_CACHE *cache_line);
-void write_args(const char *args);
+void write_args(const TCHAR *args);
 
 #endif //_AUO_FRM_H_

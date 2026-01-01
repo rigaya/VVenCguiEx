@@ -1,0 +1,194 @@
+name: Build Windows Releases
+
+on:
+  push:
+    branches:
+      - master
+      - actions
+    tags:
+      - '*'
+
+jobs:
+  get_version_name:
+    name: Get version name
+    runs-on: ubuntu-latest
+    outputs:
+      rev_count: ${{ steps.rev.outputs.REVCOUNT }}
+      version_name: ${{ steps.rev.outputs.VERSION_NAME }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set version name
+      id: rev
+      run: |
+        cd ${{ github.workspace }}
+        REVCOUNT=`git rev-list --count HEAD`
+        echo "rev_count=${REVCOUNT}" >> $GITHUB_OUTPUT
+        if [[ "${{ github.ref }}" =~ "refs/tags/" ]]; then
+          VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
+        else
+          VERSION=r${REVCOUNT}
+        fi
+        echo "version_name=${VERSION}" >> $GITHUB_OUTPUT
+
+  build:
+    name: Upload Release Asset
+    runs-on: windows-2022
+    needs: get_version_name
+
+    defaults:
+      run:
+        shell: cmd
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            platform: Win32
+            aviutlver: AviUtl
+            outext: auo
+          - arch: x64
+            platform: x64
+            aviutlver: AviUtl2
+            outext: auo2
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: ${{ matrix.arch }}
+
+      - name: MSBuild
+        run: |
+          msbuild VVenCguiEx.sln /t:build /p:configuration=Release /p:Platform=${{ matrix.platform }} -maxcpucount
+
+      - name: Download auo_setup Win32
+        id: download_auosetup_win32
+        if: matrix.platform == 'Win32'
+        run: |
+          curl -o auo_setup.zip -L https://github.com/rigaya/auo_setup/releases/download/2.02/auo_setup_2.02.zip
+
+      - name: Download auo_setup x64
+        id: download_auosetup_x64
+        if: matrix.platform == 'x64'
+        run: |
+          curl -o auo_setup.zip -L https://github.com/rigaya/auo_setup/releases/download/2.04/auo_setup_2.04_x64.zip
+
+      - name: Download vvenc
+        id: download_svtav1
+        run: |
+          curl -o vvenc.zip -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/vvencFFapp_1.13.1.zip
+
+      - name: Download muxer and audio encoder
+        id: download_muxer_and_audio_encoder
+        run: |
+          curl -o lsmash.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/lsmash_20200404.7z
+          curl -o ffmpeg_audenc.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/ffmpeg_audenc_20200321.7z
+          curl -o mp4box.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/mp4box_20220208.7z
+
+      - name: Create Archieve
+        id: archieve_win32
+        if: matrix.platform == 'Win32'
+        run: |
+          mkdir VVenCguiEx_release
+          7z x -oVVenCguiEx_release\ auo_setup.zip
+          7z x -oVVenCguiEx_release\exe_files vvenc.zip
+          7z x -oVVenCguiEx_release\exe_files lsmash.7z
+          7z x -oVVenCguiEx_release\exe_files mp4box.7z
+          7z x -oVVenCguiEx_release\exe_files ffmpeg_audenc.7z
+          del VVenCguiEx_release\Plugin\exe_files\remuxer*.exe
+          del VVenCguiEx_release\Plugin\exe_files\muxer*.exe
+          copy /y .\Release\${{ matrix.platform }}\VVenCguiEx.auo VVenCguiEx_release\plugins\
+          copy /y .\VVenCguiEx\VVenCguiEx.ini VVenCguiEx_release\plugins\
+          copy /y .\VVenCguiEx\VVenCguiEx.en.ini VVenCguiEx_release\plugins\
+          copy /y .\VVenCguiEx\VVenCguiEx.zh.ini VVenCguiEx_release\plugins\
+          copy /y .\VVenCguiEx\VVenCguiEx_uninstall.bat VVenCguiEx_release\plugins\
+          echo D | xcopy /y /e .\VVenCguiEx\stg VVenCguiEx_release\plugins\VVenCguiEx_stg
+          copy /y .\VVenCguiEx\auo_setup.ini VVenCguiEx_release\exe_files\
+          copy /y .\VVenCguiEx\VVenCguiEx_readme.txt VVenCguiEx_release\
+          dir /b /s VVenCguiEx_release\
+          7z a -mx9 AviUtl_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}.zip .\VVenCguiEx_release\*
+
+      - name: Create Archieve
+        id: archieve_x64
+        if: matrix.platform == 'x64'
+        run: |
+          mkdir Aviutl_VVenCguiEx_release
+          7z x -oAviutl_VVenCguiEx_release\ auo_setup.zip
+          7z x -oAviutl_VVenCguiEx_release\Plugin\exe_files vvenc.zip
+          7z x -oAviutl_VVenCguiEx_release\Plugin\exe_files lsmash.7z
+          7z x -oAviutl_VVenCguiEx_release\Plugin\exe_files mp4box.7z
+          7z x -oAviutl_VVenCguiEx_release\Plugin\exe_files ffmpeg_audenc.7z
+          del Aviutl_VVenCguiEx_release\Plugin\exe_files\remuxer*.exe
+          del Aviutl_VVenCguiEx_release\Plugin\exe_files\muxer*.exe
+          del Aviutl_VVenCguiEx_release\Plugin\exe_files\timelineeditor_x86.exe
+          del Aviutl_VVenCguiEx_release\Plugin\auo_setup.auf
+          copy /y .\Release\${{ matrix.platform }}\VVenCguiEx.auo2 Aviutl_VVenCguiEx_release\Plugin\
+          copy /y VVenCguiEx\VVenCguiEx.ini Aviutl_VVenCguiEx_release\Plugin\
+          copy /y VVenCguiEx\VVenCguiEx.en.ini Aviutl_VVenCguiEx_release\Plugin\
+          copy /y VVenCguiEx\VVenCguiEx.zh.ini Aviutl_VVenCguiEx_release\Plugin\
+          copy /y VVenCguiEx\VVenCguiEx_uninstall.bat Aviutl_VVenCguiEx_release\Plugin\
+          copy /y VVenCguiEx\auo_setup.ini Aviutl_VVenCguiEx_release\Plugin\exe_files\
+          copy /y VVenCguiEx\VVenCguiEx_readme.txt Aviutl_VVenCguiEx_release\
+          echo D | xcopy /y /e VVenCguiEx\stg Aviutl_VVenCguiEx_release\Plugin\VVenCguiEx_stg
+          7z a -t7z -m0=lzma -mx=9 -mmt Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}.7z .\Aviutl_VVenCguiEx_release\*
+          copy /b VVenCguiEx\7zSD.noadmin.sfx + VVenCguiEx\7zInstallerConfig.txt + Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}.7z Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}_install.exe
+
+      - name: Check Version
+        id: check_ver
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          powershell "$ver = (Get-ItemProperty .\Release\${{ matrix.platform }}\VVenCguiEx.${{ matrix.outext }}).VersionInfo.FileVersion; if ($ver -eq '${{ needs.get_version_name.outputs.version_name }}') { exit 0; } exit 1;"
+
+      - name: Calc hash Win32
+        id: calc_hash_win32
+        if: matrix.platform == 'Win32'
+        run: |
+          7z h -scrc* Aviutl_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}.zip
+
+      - name: Calc hash x64
+        id: calc_hash_x64
+        if: matrix.platform == 'x64'
+        run: |
+          7z h -scrc* Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}_install.exe
+
+      - name: Upload Release Asset
+        id: upload-release-asset-win32
+        if: matrix.platform == 'Win32' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: Aviutl_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}.zip
+
+      - name: Upload Release Asset
+        id: upload-release-asset-x64
+        if: matrix.platform == 'x64' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}_install.exe
+
+      - name: Upload artifact Win32
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'Win32'
+        with:
+          name: Aviutl_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}
+          path: Aviutl_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}.zip
+
+      - name: Upload artifact x64
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'x64'
+        with:
+          name: Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}_install
+          path: Aviutl2_VVenCguiEx_${{ needs.get_version_name.outputs.version_name }}_install.exe

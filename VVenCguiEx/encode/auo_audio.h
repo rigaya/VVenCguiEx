@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -31,16 +31,20 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
-#include "output.h"
+#include "auo.h"
 #include "auo_conf.h"
 #include "auo_system.h"
 
-void *get_audio_data(const OUTPUT_INFO *oip, PRM_ENC *pe, int start, int length, int *readed);
+int get_audio_size(const OUTPUT_INFO *oip, const int audio_format);
+void *oip_func_get_audio(const OUTPUT_INFO *oip, int start, int length, int* readed, int audio_format);
+void *get_audio_data(const OUTPUT_INFO *oip, PRM_ENC *pe, int start, int length, int *readed, int audio_format);
 
 void auo_faw_check(CONF_AUDIO *aud, const OUTPUT_INFO *oip, PRM_ENC *pe, const guiEx_settings *ex_stg);
 int check_audio_length(OUTPUT_INFO *oip, double av_length_threshold);
 
 AUO_RESULT audio_output(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe, const SYSTEM_DATA *sys_dat); //音声処理を実行
 AUO_RESULT audio_output_parallel(CONF_GUIEX *conf, const OUTPUT_INFO *oip, PRM_ENC *pe, const SYSTEM_DATA *sys_dat);
+
+BOOL check_audenc_output(const AUDIO_SETTINGS *aud_stg, std::wstring& exe_message);
 
 #endif //_AUO_AUDIO_H_

@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -41,6 +41,7 @@ using namespace System::IO;
 using namespace System::Drawing;
 using namespace System::Windows::Forms;
 
+#if 0
 static size_t GetCHARfromString(char *chr, DWORD nSize, System::String^ str) {
     DWORD str_len;
     System::IntPtr ptr = System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(str);
@@ -59,14 +60,42 @@ int GetCHARfromString(char(&chr)[size], System::String^ str) {
 
 static std::string GetCHARfromString(System::String ^str) {
     System::IntPtr ptr = System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(str);
-    char *ch_ptr = (char *)ptr.ToPointer();
+    const char *ch_ptr = (const char *)ptr.ToPointer();
     std::string result = ch_ptr;
+    System::Runtime::InteropServices::Marshal::FreeHGlobal(ptr);
+    return result;
+}
+#endif
+
+// ワイド文字版 (wchar_t / std::wstring) を返すユーティリティ
+static size_t GetWCHARfromString(wchar_t *wchr, DWORD nSize, System::String^ str) {
+    DWORD str_len;
+    System::IntPtr ptr = System::Runtime::InteropServices::Marshal::StringToHGlobalUni(str);
+    const wchar_t *wch_ptr = (const wchar_t *)ptr.ToPointer();
+    if ((str_len = (DWORD)wcslen(wch_ptr)) >= nSize) {
+        System::Runtime::InteropServices::Marshal::FreeHGlobal(ptr);
+        return 0; // バッファサイズを超えていたら何もしない
+    }
+    memcpy(wchr, wch_ptr, (str_len + 1) * sizeof(wchr[0]));
+    System::Runtime::InteropServices::Marshal::FreeHGlobal(ptr);
+    return str_len;
+}
+
+template <size_t size>
+int GetWCHARfromString(wchar_t(&wchr)[size], System::String^ str) {
+    return (int)GetWCHARfromString(wchr, size, str);
+}
+
+static std::wstring GetWCHARfromString(System::String ^str) {
+    System::IntPtr ptr = System::Runtime::InteropServices::Marshal::StringToHGlobalUni(str);
+    const wchar_t *wch_ptr = (const wchar_t *)ptr.ToPointer();
+    std::wstring result = wch_ptr;
     System::Runtime::InteropServices::Marshal::FreeHGlobal(ptr);
     return result;
 }
 
 static int CountStringBytes(System::String^ str) {
-    return System::Text::Encoding::GetEncoding(L"Shift_JIS")->GetByteCount(str);
+    return System::Text::Encoding::GetEncoding(L"utf-16")->GetByteCount(str);
 }
 
 static String^ MakeExeFilter(System::String^ fileExeName) {
@@ -113,7 +142,7 @@ static System::Drawing::Font^ GetFontFrom_AUO_FONT_INFO(const AUO_FONT_INFO *inf
 //DefaultFontと比較して、異なっていたらAUO_FONT_INFOに保存する
 static void Set_AUO_FONT_INFO(AUO_FONT_INFO *info, System::Drawing::Font^ Font, System::Drawing::Font^ DefaultFont) {
     if (String::Compare(DefaultFont->FontFamily->Name, Font->FontFamily->Name))
-        GetCHARfromString(info->name, sizeof(info->name), Font->FontFamily->Name);
+        GetWCHARfromString(info->name, _countof(info->name), Font->FontFamily->Name);
     if (DefaultFont->Size != Font->Size)
         info->size = Font->Size;
     info->style = (int)Font->Style;
@@ -179,7 +208,7 @@ static String^ GetRelativePath(String^ path, String^ baseDir) {
     pin_ptr<const WCHAR> base_dir = PtrToStringChars(baseDir);
     pin_ptr<const WCHAR> target_path = PtrToStringChars(path);
     WCHAR buf[MAX_PATH_LEN];
-    GetRelativePathTo(buf, _countof(buf), target_path, NULL, base_dir);
+    GetRelativePathTo(buf, _countof(buf), target_path, base_dir);
     return String(buf).ToString();
 }
 
@@ -203,7 +232,7 @@ static Color ColorfromInt(const ColorRGB c) {
 }
 
 static inline String^ Utf8toString(const char *str) {
-    int length = strlen(str);
+    int length = (int)strlen(str);
     if (CODE_PAGE_UTF8 != jpn_check(str, length)) {
         return String(str).ToString();
     }
@@ -233,6 +262,7 @@ static System::Drawing::Color getTextBoxForeColor(const AuoTheme theme, const Da
 //tabControlのanchorはLeft,Upのみにする
 static System::Void SwitchComboBoxBorder(TabControl^ TB, Panel^ PN, const AuoTheme themeFrom, const AuoTheme themeTo, const DarkenWindowStgReader *stgReader) {
     if (themeTo == themeFrom) return;
+    if (stgReader == nullptr) return;
     switch (themeFrom) {
     case AuoTheme::DarkenWindowDark:
         break;
@@ -283,6 +313,7 @@ static bool isToolStripItem(System::Type^ type) {
 }
 
 static System::Void SetAllColor(Control ^top, const AuoTheme themeTo, System::Type^ topType, const DarkenWindowStgReader *stgReader) {
+    if (stgReader == nullptr) return;
     System::Type^ type = top->GetType();
     if (type == GroupBox::typeid) {
         GroupBox^ GB = dynamic_cast<GroupBox^>(top);
@@ -437,6 +468,7 @@ static System::Void fcgMouseEnterLeave_SetColor(System::Object^ sender,  const A
 
 //どうもうまくいかない
 static System::Void SetToolTipColor(ToolTip ^TT, const AuoTheme themeTo, const DarkenWindowStgReader *stgReader) {
+    if (stgReader == nullptr) return;
     TT->IsBalloon = (themeTo == AuoTheme::DefaultLight);
 
     System::Drawing::Color foreColor = (themeTo == AuoTheme::DarkenWindowDark) ? ColorfromInt(DEFAULT_UI_COLOR_TEXT_DARK) : System::Windows::Forms::Control::DefaultForeColor;

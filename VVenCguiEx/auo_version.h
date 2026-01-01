@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -28,19 +28,26 @@
 #ifndef _AUO_VERSION_H_
 #define _AUO_VERSION_H_
 
-#define AUO_VERSION          0,0,0,5
-#define AUO_VERSION_STR      "0.00beta5"
-#define AUO_VERSION_STR_W   L"0.00beta5"
+#define AUO_VERSION          0,1,0,0
+#define AUO_VERSION_STR      "1.00"
+#define AUO_VERSION_STR_W   L"1.00"
 #define AUO_NAME_R            VVenCguiEx
 #define AUO_NAME_WITHOUT_EXT "VVenCguiEx"
 #define AUO_NAME_WITHOUT_EXT_W L"VVenCguiEx"
+#if _M_X64
+#define AUO_NAME             "VVenCguiEx.auo2"
+#define AUO_NAME_W          L"VVenCguiEx.auo2"
+#else
 #define AUO_NAME             "VVenCguiEx.auo"
 #define AUO_NAME_W          L"VVenCguiEx.auo"
+#endif
 #define AUO_FULL_NAME        "拡張 VVenC 出力(GUI) Ex"
 #define AUO_FULL_NAME_W     L"拡張 VVenC 出力(GUI) Ex"
 #define AUO_VERSION_NAME     "拡張 VVenC 出力(GUI) Ex " AUO_VERSION_STR
-#define AUO_VERSION_INFO     "拡張 VVenC 出力(GUI) Ex (VVenCguiEx) " AUO_VERSION_STR " by rigaya"
-#define AUO_EXT_FILTER       "All Support Formats (*.*)\0*.mkv;*.mp4;*.264;*.mp4\0mkv file (*.mkv)\0*.mkv\0mp4 file (*.mp4)\0*.mp4\0raw file (*.264)\0*.264\0"
+#define AUO_VERSION_INFO     "拡張 VVenC 出力(GUI) Ex (VVenCguiEx) " AUO_VERSION_STR
+#define AUO_VERSION_INFO_W   L"拡張 VVenC 出力(GUI) Ex (VVenCguiEx) " AUO_VERSION_STR_W
+#define AUO_EXT_FILTER       "All Support Formats (*.*)\0*.mkv;*.mp4;*.266;*.mp4\0mkv file (*.mkv)\0*.mkv\0mp4 file (*.mp4)\0*.mp4\0raw file (*.266)\0*.266\0"
+#define AUO_EXT_FILTER_W    L"All Support Formats (*.*)\0*.mkv;*.mp4;*.266;*.mp4\0mkv file (*.mkv)\0*.mkv\0mp4 file (*.mp4)\0*.mp4\0raw file (*.266)\0*.266\0"
 
 #define AUOSETUP_EVENT_ABORT "AUOSETUP_EVENT_ABORT"
 
@@ -50,9 +57,10 @@
 #define ENCODER_X264 0
 #define ENCODER_X265 0
 #define ENCODER_SVTAV1 0
+#define ENCODER_FFMPEG 0
 #define ENCODER_VVENC 1
-#define ENABLE_AMP (ENCODER_X264 != 0)
-#define ENABLE_TCFILE_IN (ENCODER_X264 != 0)
+#define ENABLE_AMP (ENCODER_X264 || ENCODER_X265)
+#define ENABLE_TCFILE_IN (ENCODER_X264)
 
 #ifdef DEBUG
 #define VER_DEBUG   VS_FF_DEBUG

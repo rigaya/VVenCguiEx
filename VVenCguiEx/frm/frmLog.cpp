@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -25,11 +25,15 @@
 //
 // --------------------------------------------------------------------------------------------
 
-#include "frmLog.h"
+
 #include "string.h"
 
+#include "auo.h"
 #include "auo_mes.h"
 #include "auo_version.h"
+
+#if AVIUTL_TARGET_VER == 1
+#include "frmLog.h"
 
 using namespace AUO_NAME_R;
 
@@ -37,7 +41,7 @@ using namespace AUO_NAME_R;
 
 //ログウィンドウを表示させる
 [STAThreadAttribute]
-void show_log_window(const char *aviutl_dir, BOOL disable_visual_styles) {
+void show_log_window(const TCHAR *aviutl_dir, BOOL disable_visual_styles) {
     if (!disable_visual_styles)
         System::Windows::Forms::Application::EnableVisualStyles();
     System::IO::Directory::SetCurrentDirectory(String(aviutl_dir).ToString());
@@ -89,13 +93,13 @@ void flush_audio_log() {
 }
 //ログウィンドウからのx264制御を有効化
 [STAThreadAttribute]
-void enable_x264_control(DWORD *priority, BOOL *enc_pause, BOOL afs, BOOL add_progress, DWORD start_time, int _total_frame) {
-    frmLog::Instance::get()->Enablex264Control(priority, enc_pause, afs, add_progress, start_time, _total_frame);
+void enable_enc_control(DWORD *priority, bool *enc_pause, BOOL afs, BOOL add_progress, DWORD start_time, int _total_frame) {
+    frmLog::Instance::get()->EnableEncControl(priority, enc_pause, afs, add_progress, start_time, _total_frame);
 }
 //ログウィンドウからのx264制御を無効化
 [STAThreadAttribute]
-void disable_x264_control() {
-    frmLog::Instance::get()->Disablex264Control();
+void disable_enc_control() {
+    frmLog::Instance::get()->DisableEncControl();
 }
 //ログウィンドウを閉じられるかどうかを設定
 [STAThreadAttribute]
@@ -104,7 +108,7 @@ void set_prevent_log_close(BOOL prevent) {
 }
 //自動ログ保存を実行
 [STAThreadAttribute]
-void auto_save_log_file(const char *log_filepath) {
+void auto_save_log_file(const TCHAR *log_filepath) {
     frmLog::Instance::get()->AutoSaveLogFile(log_filepath);
 }
 //ログウィンドウに設定を再ロードさせる
@@ -122,6 +126,16 @@ void log_process_events() {
 [STAThreadAttribute]
 int get_current_log_len(bool first_pass) {
     return frmLog::Instance::get()->GetLogStringLen(first_pass);
+}
+
+[STAThreadAttribute]
+void close_log_window() {
+    frmLog::Instance::get()->CloseLogWindow();
+}
+
+[STAThreadAttribute]
+bool is_log_window_closed() {
+    return frmLog::Instance::get()->IsClosed();
 }
 
 #pragma warning( push )
@@ -162,3 +176,5 @@ System::Void frmSetLogColor::fscBTOK_Click(System::Object^  sender, System::Even
     this->Close();
 }
 #pragma warning( pop )
+
+#endif // AVIUTL_TARGET_VER == 1

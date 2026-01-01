@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------------------
-// x264guiEx/x265guiEx/svtAV1guiEx/VVenCguiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
+// x264guiEx/x265guiEx/svtAV1guiEx/ffmpegOut/QSVEnc/NVEnc/VCEEnc by rigaya
 // -----------------------------------------------------------------------------------------
 // The MIT License
 //
@@ -33,6 +33,20 @@
 #include <Windows.h>
 #include <string>
 #include "auo_version.h"
+#include "rgy_tchar.h"
+
+#if _M_X64
+#define AVIUTL_TARGET_VER 2
+typedef wchar_t aviutlchar;
+#include "output2.h"
+#define OUTPUT_INFO_FLAG_VIDEO (OUTPUT_INFO::FLAG_VIDEO)
+#define OUTPUT_INFO_FLAG_AUDIO (OUTPUT_INFO::FLAG_AUDIO)
+#define func_get_video_ex func_get_video
+#else
+#define AVIUTL_TARGET_VER 1
+typedef char aviutlchar;
+#include "output.h"
+#endif
 
 const int   MAX_PATH_LEN          = 1024; //NTFSでは32768文字らしいが...いらんやろ
 const int   MAX_APPENDIX_LEN      = 63; //適当
@@ -53,43 +67,77 @@ enum {
 #if ENCODER_X264
 static const char *ENCODER_NAME   = "x264";
 static const wchar_t *ENCODER_NAME_W = L"x264";
-static const char *ENOCDER_RAW_EXT = ".264";
+static const TCHAR *ENOCDER_RAW_EXT = _T(".264");
 static const char *ENCODER_APP_NAME = ENCODER_NAME;
 static const wchar_t *ENCODER_APP_NAME_W = ENCODER_NAME_W;
-static const char *ENCODER_REPLACE_MACRO = "%{x264path}";
+static const TCHAR *ENCODER_REPLACE_MACRO = _T("%{x264path}");
 static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".264"    };
 static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.264"    };
 static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
 #elif ENCODER_X265
 static const char *ENCODER_NAME   = "x265";
 static const wchar_t *ENCODER_NAME_W   = L"x265";
-static const char *ENOCDER_RAW_EXT = ".265";
+static const TCHAR *ENOCDER_RAW_EXT = _T(".265");
 static const char *ENCODER_APP_NAME = ENCODER_NAME;
 static const wchar_t *ENCODER_APP_NAME_W = ENCODER_NAME_W;
-static const char *ENCODER_REPLACE_MACRO = "%{x265path}";
+static const TCHAR *ENCODER_REPLACE_MACRO = _T("%{x265path}");
 static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".265"    };
 static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.265"    };
 static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
 #elif ENCODER_SVTAV1
 static const char *ENCODER_NAME   = "svt-av1";
 static const wchar_t *ENCODER_NAME_W   = L"svt-av1";
-static const char *ENOCDER_RAW_EXT = ".av1";
-static const char* ENCODER_APP_NAME = "SvtAv1EncApp";
-static const wchar_t* ENCODER_APP_NAME_W = L"SvtAv1EncApp";
-static const char *ENCODER_REPLACE_MACRO = "%{svtav1path}";
+static const TCHAR *ENOCDER_RAW_EXT = _T(".av1");
+static const char *ENCODER_APP_NAME = "SvtAv1EncApp";
+static const wchar_t *ENCODER_APP_NAME_W = L"SvtAv1EncApp";
+static const TCHAR *ENCODER_REPLACE_MACRO = _T("%{svtav1path}");
 static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".av1"    };
 static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.av1"    };
 static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
+#elif ENCODER_FFMPEG
+static const char    *ENCODER_NAME   =  "ffmpeg";
+static const wchar_t *ENCODER_NAME_W = L"ffmpeg";
+static const TCHAR    *ENOCDER_RAW_EXT = _T(".264");
+static const char    *ENCODER_APP_NAME = "ffmpeg";
+static const wchar_t *ENCODER_APP_NAME_W = L"ffmpeg";
+static const TCHAR    *ENCODER_REPLACE_MACRO = _T("%{ffmpegpath}");
+#elif ENCODER_QSV
+static const wchar_t *ENCODER_NAME_W = L"QSV";
+static const TCHAR    *ENOCDER_RAW_EXT = _T(".264");
+static const char    *ENCODER_APP_NAME = "QSVEnc";
+static const wchar_t *ENCODER_APP_NAME_W = L"QSVEnc";
+static const TCHAR    *ENCODER_REPLACE_MACRO = _T("%{qsvenccpath}");
+static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".264"    };
+static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.264"    };
+static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
+#elif ENCODER_NVENC
+static const wchar_t *ENCODER_NAME_W = L"NVENC";
+static const TCHAR    *ENOCDER_RAW_EXT = _T(".264");
+static const char    *ENCODER_APP_NAME = "NVEnc";
+static const wchar_t *ENCODER_APP_NAME_W = L"NVEnc";
+static const TCHAR    *ENCODER_REPLACE_MACRO = _T("%{nvenccpath}");
+static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".264"    };
+static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.264"    };
+static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
+#elif ENCODER_VCEENC
+static const wchar_t *ENCODER_NAME_W = L"VCE";
+static const TCHAR    *ENOCDER_RAW_EXT = _T(".264");
+static const char    *ENCODER_APP_NAME = "VCEEnc";
+static const wchar_t *ENCODER_APP_NAME_W = L"VCEEnc";
+static const TCHAR    *ENCODER_REPLACE_MACRO = _T("%{vceenccpath}");
+static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".264"    };
+static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.264"    };
+static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
 #elif ENCODER_VVENC
-static const char* ENCODER_NAME = "vvenc";
-static const wchar_t* ENCODER_NAME_W = L"vvenc";
-static const char* ENOCDER_RAW_EXT = ".vvc";
-static const char* ENCODER_APP_NAME = "vvencFFapp";
-static const wchar_t* ENCODER_APP_NAME_W = L"vvencFFapp";
-static const char* ENCODER_REPLACE_MACRO = "%{vvencpath}";
-static const char* const OUTPUT_FILE_EXT[] = { ".mp4",     ".mkv",     ".vvc" };
-static const char* const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.vvc" };
-static const char* const OUTPUT_FILE_EXT_DESC[] = { "mp4 file", "mkv file", "raw file" };
+static const char *ENCODER_NAME   = "VVenC";
+static const wchar_t *ENCODER_NAME_W   = L"VVenC";
+static const TCHAR *ENOCDER_RAW_EXT = _T(".266");
+static const char *ENCODER_APP_NAME = "vvencFFapp";
+static const wchar_t *ENCODER_APP_NAME_W = L"vvencFFapp";
+static const TCHAR *ENCODER_REPLACE_MACRO = _T("%{vvencpath}");
+static const char *const OUTPUT_FILE_EXT[]        = {  ".mp4",     ".mkv",     ".266"    };
+static const char *const OUTPUT_FILE_EXT_FILTER[] = { "*.mp4",    "*.mkv",    "*.266"    };
+static const char *const OUTPUT_FILE_EXT_DESC[]   = { "mp4 file", "mkv file", "raw file" };
 #else
 static_assert(false);
 #endif
@@ -100,6 +148,7 @@ enum {
     MUXER_MKV      = VIDEO_OUTPUT_MKV,
     MUXER_TC2MP4   = VIDEO_OUTPUT_MP4 + 2,
     MUXER_MP4_RAW,
+    MUXER_INTERNAL,
     MUXER_MAX_COUNT,
 };
 
@@ -112,7 +161,7 @@ enum {
 typedef DWORD AUO_RESULT;
 
 typedef struct AUO_FONT_INFO {
-    char   name[256]; //フォント名(family name)
+    wchar_t name[256]; //フォント名(family name)
     double size;      //フォントサイズ
     int    style;     //フォントスタイル
 } AUO_FONT_INFO;
@@ -121,9 +170,9 @@ void write_log_line_fmt(int log_type_index, const wchar_t *format, ...);
 void write_log_auo_line_fmt(int log_type_index, const wchar_t *format, ...);
 void write_log_auo_enc_time(const wchar_t *mes, DWORD time);
 
-int load_lng(const char *lang);
-const char *get_auo_version_info();
-std::string get_last_out_stg_appendix();
+int load_lng(const TCHAR *lang);
+const aviutlchar *get_auo_version_info();
+std::wstring get_last_out_stg_appendix();
 
 bool checkIfModuleLoaded(const wchar_t *moduleName);
 

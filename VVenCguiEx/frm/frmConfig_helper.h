@@ -622,7 +622,7 @@ namespace VVenCguiEx {
     {
         String^ Name;
         String^ Path;
-        const char* args;
+        const TCHAR* args;
     };
 
     const int fcgTBQualityTimerLatency = 600;
@@ -640,8 +640,8 @@ static const WCHAR *use_default_exe_path = L"exe_files内の実行ファイル�
 #define STR_BITRATE_AUTO (L"-1: 自動 ")
 
 const int x264_encmode_to_RCint[] = {
-    X264_RC_QP,
-    X264_RC_BITRATE,
+    ENC_RC_QP,
+    ENC_RC_BITRATE,
     NULL
 };
 
