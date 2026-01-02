@@ -137,15 +137,11 @@ VVenCguiEx.iniを書き換えることにより、音声エンコーダやmuxer�
 
 ## VVenCguiEx の Aviutl からの削除
 
-VVenCguiEx の Aviutl から削除するには、"plugins" フォルダ内の下記ファイルとフォルダを削除してください。
+VVenCguiEx を Aviutl/AviUtl2 から削除するには、プラグインフォルダの ```VVenCguiEx_uninstall.bat``` をダブルクリックして実行します。
 
-- [フォルダ] VVenCguiEx_stg
-- [ファイル] VVenCguiEx.auo
-- [ファイル] VVenCguiEx.conf (存在する場合のみ)
-- [ファイル] VVenCguiEx(.ini)
-- [ファイル] auo_setup.auf
+![削除](./data/VVenCguiEx_1_00_uninstall_20260103.webp)
 
-![削除](./data/VVenCguiEx_0_00_uninstall_01.png)
+上記画面が表示されたら、```y``` と入力し、削除を実行してください。
 
 
 ## ソースコードについて
