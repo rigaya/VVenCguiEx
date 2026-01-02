@@ -93,7 +93,7 @@ jobs:
         run: |
           curl -o lsmash.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/lsmash_20200404.7z
           curl -o ffmpeg_audenc.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/ffmpeg_audenc_20200321.7z
-          curl -o mp4box.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/mp4box_20220208.7z
+          curl -o mp4box.7z -L https://github.com/rigaya/AutoBuildForAviUtlPlugins/releases/download/auto-build-20250907-045307/mp4box_20251021.7z
 
       - name: Create Archieve
         id: archieve_win32
